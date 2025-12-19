@@ -6,3 +6,6 @@ playwright==1.40.0
 pyperclip==1.9.0
 pyautogui==0.9.54
 Pillow==10.1.0
+# 后台控制依赖（Windows）
+pywin32>=306
+pywinauto>=0.6.8

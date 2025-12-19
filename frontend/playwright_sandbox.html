@@ -451,6 +451,7 @@
         let errorCount = 0;
         let agentRunning = false;
         let taskCompleted = false;
+        let eventSource = null;  // SSE 连接
 
         // 检查后端服务状态
         async function checkBackendStatus() {
@@ -690,6 +691,97 @@
             }
         }
 
+        // 订阅 SSE 事件
+        function subscribeEvents(sid) {
+            const backendUrl = document.getElementById('backendUrl').value;
+            
+            // 关闭已有连接
+            if (eventSource) {
+                eventSource.close();
+            }
+            
+            eventSource = new EventSource(`${backendUrl}/agent/events/${sid}`);
+            
+            eventSource.addEventListener('connected', (e) => {
+                addLog('SSE 连接已建立', 'success');
+            });
+            
+            eventSource.addEventListener('screenshot', (e) => {
+                try {
+                    const event = JSON.parse(e.data);
+                    const data = event.data;
+                    
+                    // 更新截图预览
+                    document.getElementById('browserScreenshot').src = data.screenshot;
+                    
+                    // 更新 URL（如果提供）
+                    if (data.url) {
+                        document.getElementById('currentUrl').value = data.url;
+                    }
+                    
+                    // 记录日志
+                    if (data.action) {
+                        addLog(`步骤 ${data.step}: 执行 ${data.action} 后截图`, 'info');
+                    } else {
+                        addLog(`步骤 ${data.step}: 截图更新`, 'info');
+                    }
+                } catch (err) {
+                    console.error('解析截图事件失败:', err);
+                }
+            });
+            
+            eventSource.addEventListener('action', (e) => {
+                try {
+                    const event = JSON.parse(e.data);
+                    const data = event.data;
+                    addLog(`执行操作: ${data.action}`, 'info');
+                    actionCount++;
+                    updateStats();
+                } catch (err) {
+                    console.error('解析操作事件失败:', err);
+                }
+            });
+            
+            eventSource.addEventListener('complete', (e) => {
+                try {
+                    const event = JSON.parse(e.data);
+                    const data = event.data;
+                    addLog(`✅ 任务完成！总结: ${data.summary}`, 'success');
+                    alert(`✅ 任务完成！\n\n${data.summary}`);
+                    taskCompleted = true;
+                } catch (err) {
+                    console.error('解析完成事件失败:', err);
+                }
+            });
+            
+            eventSource.addEventListener('error', (e) => {
+                if (e.data) {
+                    try {
+                        const event = JSON.parse(e.data);
+                        const data = event.data;
+                        addLog(`❌ 错误: ${data.error}`, 'error');
+                        errorCount++;
+                        updateStats();
+                    } catch (err) {
+                        addLog('SSE 连接错误', 'error');
+                    }
+                }
+            });
+            
+            eventSource.onerror = () => {
+                addLog('SSE 连接断开，尝试重连...', 'error');
+            };
+        }
+        
+        // 取消订阅
+        function unsubscribeEvents() {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+                addLog('SSE 连接已关闭', 'info');
+            }
+        }
+
         // Agent 自动模式
         async function executeAgentAuto() {
             if (!sessionId) {
@@ -710,6 +802,9 @@
             executeBtn.innerHTML = '🤖 Agent运行中<span class="loading"></span>';
             addLog(`启动 Agent 自动模式: ${task}`, 'info');
             agentRunning = true;
+            
+            // 订阅 SSE 事件以接收实时截图
+            subscribeEvents(sessionId);
 
             try {
                 const response = await fetch(`${backendUrl}/agent/start`, {
@@ -729,23 +824,21 @@
                 if (data.success) {
                     addLog(`✅ Agent 完成！总步骤: ${data.total_steps}`, 'success');
                     
-                    if (data.completed) {
-                        addLog(`📝 任务总结: ${data.summary}`, 'success');
-                        alert(`✅ 任务完成！\n\n${data.summary}`);
-                        taskCompleted = true;
+                    // 完成事件已通过 SSE 处理
+                    if (!data.completed) {
+                        addLog(`任务结束: ${data.summary || '未完成'}`, 'info');
                     }
                     
                     // 显示所有步骤
                     data.steps.forEach((step, index) => {
                         if (step.success && step.actions) {
                             step.actions.forEach(action => {
-                                addLog(`步骤${index + 1}: ${action.tool}`, 'info');
                                 successCount++;
                             });
                         }
                     });
                     
-                    await takeScreenshot();
+                    updateStats();
                 } else {
                     throw new Error(data.error || '执行失败');
                 }
@@ -758,6 +851,8 @@
                 executeBtn.innerHTML = '⚡ 执行任务';
                 agentRunning = false;
                 updateStats();
+                // 延迟关闭 SSE 以确保接收完所有事件
+                setTimeout(unsubscribeEvents, 2000);
             }
         }
 
@@ -926,8 +1021,9 @@
             addLog('系统已就绪', 'info');
         });
 
-        // 页面关闭时自动关闭浏览器
+        // 页面关闭时自动关闭浏览器和SSE连接
         window.addEventListener('beforeunload', () => {
+            unsubscribeEvents();
             if (sessionId) {
                 closeBrowser();
             }

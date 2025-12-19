@@ -258,6 +258,7 @@
         let currentScreenshot = null;
         let screenWidth = 0;
         let screenHeight = 0;
+        let eventSource = null;  // SSE 连接
 
         function addLog(msg, type = 'info') {
             const container = document.getElementById('logContainer');
@@ -331,6 +332,90 @@
             }
         }
 
+        // 订阅 SSE 事件
+        function subscribeEvents(sessionId) {
+            const backendUrl = document.getElementById('backendUrl').value;
+            
+            // 关闭已有连接
+            if (eventSource) {
+                eventSource.close();
+            }
+            
+            eventSource = new EventSource(`${backendUrl}/agent/events/${sessionId}`);
+            
+            eventSource.addEventListener('connected', (e) => {
+                addLog('SSE 连接已建立', 'success');
+            });
+            
+            eventSource.addEventListener('screenshot', (e) => {
+                try {
+                    const event = JSON.parse(e.data);
+                    const data = event.data;
+                    
+                    // 更新截图预览
+                    currentScreenshot = data.screenshot;
+                    document.getElementById('screenPreview').src = data.screenshot;
+                    document.getElementById('screenRes').textContent = `分辨率: ${data.width}x${data.height}`;
+                    document.getElementById('lastUpdate').textContent = `最后更新: ${new Date().toLocaleTimeString()}`;
+                    
+                    // 记录日志
+                    if (data.action) {
+                        addLog(`步骤 ${data.step}: 执行 ${data.action} 后截图`, 'info');
+                    } else {
+                        addLog(`步骤 ${data.step}: 截图更新`, 'info');
+                    }
+                } catch (err) {
+                    console.error('解析截图事件失败:', err);
+                }
+            });
+            
+            eventSource.addEventListener('action', (e) => {
+                try {
+                    const event = JSON.parse(e.data);
+                    const data = event.data;
+                    addLog(`执行操作: ${data.action}`, 'info');
+                } catch (err) {
+                    console.error('解析操作事件失败:', err);
+                }
+            });
+            
+            eventSource.addEventListener('complete', (e) => {
+                try {
+                    const event = JSON.parse(e.data);
+                    const data = event.data;
+                    addLog(`✅ 任务完成！总结: ${data.summary}`, 'success');
+                    alert('✅ 任务完成！\n\n' + data.summary);
+                } catch (err) {
+                    console.error('解析完成事件失败:', err);
+                }
+            });
+            
+            eventSource.addEventListener('error', (e) => {
+                if (e.data) {
+                    try {
+                        const event = JSON.parse(e.data);
+                        const data = event.data;
+                        addLog(`❌ 错误: ${data.error}`, 'error');
+                    } catch (err) {
+                        addLog('SSE 连接错误', 'error');
+                    }
+                }
+            });
+            
+            eventSource.onerror = () => {
+                addLog('SSE 连接断开，尝试重连...', 'error');
+            };
+        }
+        
+        // 取消订阅
+        function unsubscribeEvents() {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+                addLog('SSE 连接已关闭', 'info');
+            }
+        }
+
         async function startAgent() {
             const backendUrl = document.getElementById('backendUrl').value;
             const instruction = document.getElementById('instruction').value;
@@ -346,6 +431,9 @@
             stopBtn.disabled = false;
             btn.innerHTML = '运行中...<span class="loading"></span>';
             addLog('启动 Agent 自动化循环...', 'info');
+            
+            // 订阅 SSE 事件以接收实时截图
+            subscribeEvents('real');
 
             try {
                 const response = await fetch(`${backendUrl}/agent/start`, {
@@ -361,9 +449,12 @@
                 });
                 const data = await response.json();
                 if (data.success) {
-                    addLog(`任务完成！总结: ${data.summary}`, 'success');
-                    alert('✅ 任务完成！\n\n' + data.summary);
-                    await takeScreenshot();
+                    // 完成事件已通过 SSE 处理
+                    if (!data.completed) {
+                        addLog(`任务结束: ${data.summary || '未完成'}`, 'info');
+                    }
+                } else {
+                    addLog(`Agent 执行失败: ${data.error}`, 'error');
                 }
             } catch (e) {
                 addLog('Agent 运行出错: ' + e.message, 'error');
@@ -371,6 +462,8 @@
                 btn.disabled = false;
                 stopBtn.disabled = true;
                 btn.innerHTML = '🤖 自动循环 (Agent)';
+                // 延迟关闭 SSE 以确保接收完所有事件
+                setTimeout(unsubscribeEvents, 2000);
             }
         }
 
@@ -396,8 +489,16 @@
                 addLog('停止失败: ' + e.message, 'error');
                 stopBtn.disabled = false;
                 stopBtn.textContent = '🛑 停止运行';
+            } finally {
+                // 关闭 SSE 连接
+                unsubscribeEvents();
             }
         }
+        
+        // 页面卸载时清理
+        window.addEventListener('beforeunload', () => {
+            unsubscribeEvents();
+        });
     </script>
 </body>
 </html>

@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>后台窗口沙盒 - Gemini计算机控制</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 1400px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .feature-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 30px;
+        }
+
+        .control-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        label {
+            color: #555;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        textarea,
+        select {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+
+        select {
+            cursor: pointer;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .button-row button {
+            flex: 1;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #e0e0e0;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+            color: white;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .preview-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .screen-container {
+            position: relative;
+            border: 4px solid #333;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #1a1a2e;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .screen-container.has-image {
+            background: #000;
+        }
+
+        #screenPreview {
+            max-width: 100%;
+            max-height: 600px;
+            display: block;
+        }
+
+        .placeholder {
+            color: #666;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .placeholder-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .log-panel {
+            background: #1a1a2e;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #ccc;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            padding-left: 10px;
+            border-left: 3px solid #667eea;
+        }
+
+        .log-entry.success { border-left-color: #38ef7d; color: #38ef7d; }
+        .log-entry.error { border-left-color: #ff4b2b; color: #ff4b2b; }
+        .log-entry.warning { border-left-color: #ffc107; color: #ffc107; }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #666;
+            padding: 5px 0;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ccc;
+        }
+
+        .status-dot.connected { background: #38ef7d; }
+        .status-dot.disconnected { background: #ff4b2b; }
+
+        .window-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+
+        .window-item {
+            padding: 10px 15px;
+            border-bottom: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .window-item:last-child {
+            border-bottom: none;
+        }
+
+        .window-item:hover {
+            background: #f0f0f0;
+        }
+
+        .window-item.selected {
+            background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
+            border-left: 3px solid #667eea;
+        }
+
+        .window-title {
+            font-size: 14px;
+            color: #333;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 250px;
+        }
+
+        .window-hwnd {
+            font-size: 11px;
+            color: #999;
+            font-family: monospace;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border: 1px solid #b6d4fe;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 13px;
+            color: #0a58ca;
+            margin-bottom: 15px;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffecb5;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 13px;
+            color: #664d03;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌙 后台窗口沙盒 <span class="feature-badge">新功能</span></h1>
+        <p class="subtitle">后台操作窗口，不干扰你的工作 - 使用 Win32 API</p>
+
+        <div class="main-layout">
+            <div class="control-panel">
+                <!-- 后端连接 -->
+                <div class="section">
+                    <div class="section-title">🔌 服务连接</div>
+                    <div class="input-group">
+                        <label for="backendUrl">后端地址</label>
+                        <input type="text" id="backendUrl" value="http://localhost:5000">
+                    </div>
+                    <button class="btn-secondary" onclick="checkConnection()" style="width: 100%;">
+                        检查连接
+                    </button>
+                    <div class="status-indicator" style="margin-top: 10px;">
+                        <span class="status-dot" id="connectionDot"></span>
+                        <span id="connectionStatus">未连接</span>
+                    </div>
+                </div>
+
+                <!-- 窗口选择 -->
+                <div class="section">
+                    <div class="section-title">🪟 目标窗口</div>
+                    <div class="info-box">
+                        选择要在后台控制的窗口。操作将发送到该窗口，不会移动你的鼠标。
+                    </div>
+                    <div class="button-row" style="margin-bottom: 15px;">
+                        <button class="btn-secondary" onclick="refreshWindows()">
+                            🔄 刷新窗口列表
+                        </button>
+                    </div>
+                    <div class="window-list" id="windowList">
+                        <div class="placeholder" style="padding: 20px; color: #999;">
+                            点击"刷新窗口列表"获取可用窗口
+                        </div>
+                    </div>
+                    <div id="selectedWindowInfo" style="margin-top: 10px; font-size: 13px; color: #666;"></div>
+                </div>
+
+                <!-- 任务指令 -->
+                <div class="section">
+                    <div class="section-title">📝 任务指令</div>
+                    <div class="input-group">
+                        <textarea id="instruction" placeholder="输入你想让 AI 在目标窗口中执行的任务...&#10;例如：在记事本中输入 Hello World"></textarea>
+                    </div>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="section">
+                    <div class="section-title">🎮 操作控制</div>
+                    <div class="warning-box">
+                        ⚠️ 后台模式仅支持传统 Win32 应用（如记事本）。Chrome 等现代应用可能不完全支持。
+                    </div>
+                    <div class="button-group">
+                        <button class="btn-secondary" id="screenshotBtn" onclick="takeScreenshot()" disabled>
+                            📸 后台截图
+                        </button>
+                        <button class="btn-primary" id="analyzeBtn" onclick="analyzeAndExecute()" disabled>
+                            ⚡ 分析并执行
+                        </button>
+                        <button class="btn-success" id="agentBtn" onclick="startAgent()" disabled>
+                            🤖 自动循环 (Agent)
+                        </button>
+                        <button class="btn-danger" id="stopBtn" onclick="stopAgent()" disabled>
+                            🛑 停止
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="preview-section">
+                <div class="status-bar">
+                    <span id="windowRes">窗口尺寸: 未知</span>
+                    <span id="lastUpdate">最后更新: 从未</span>
+                </div>
+                <div class="screen-container" id="screenContainer">
+                    <div class="placeholder" id="previewPlaceholder">
+                        <div class="placeholder-icon">🪟</div>
+                        <div>选择目标窗口后，点击"后台截图"查看窗口内容</div>
+                        <div style="margin-top: 10px; font-size: 12px; color: #888;">
+                            后台截图不需要窗口在前台显示
+                        </div>
+                    </div>
+                    <img id="screenPreview" alt="窗口预览" style="display: none;">
+                </div>
+
+                <div class="log-panel" id="logContainer">
+                    <div style="font-weight: bold; margin-bottom: 10px; color: #667eea;">📋 操作日志</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentScreenshot = null;
+        let targetWindow = null;
+        let windowWidth = 0;
+        let windowHeight = 0;
+        let eventSource = null;  // SSE 连接
+
+        function addLog(msg, type = 'info') {
+            const container = document.getElementById('logContainer');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            container.appendChild(entry);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function checkConnection() {
+            const backendUrl = document.getElementById('backendUrl').value;
+            const dot = document.getElementById('connectionDot');
+            const status = document.getElementById('connectionStatus');
+
+            try {
+                const response = await fetch(`${backendUrl}/health`);
+                const data = await response.json();
+                if (data.status === 'ok') {
+                    dot.className = 'status-dot connected';
+                    status.textContent = `已连接 (${data.model})`;
+                    addLog('后端服务连接成功', 'success');
+                }
+            } catch (e) {
+                dot.className = 'status-dot disconnected';
+                status.textContent = '连接失败';
+                addLog('无法连接到后端服务: ' + e.message, 'error');
+            }
+        }
+
+        async function refreshWindows() {
+            const backendUrl = document.getElementById('backendUrl').value;
+            const listContainer = document.getElementById('windowList');
+
+            listContainer.innerHTML = '<div style="padding: 20px; text-align: center;"><span class="loading"></span> 加载中...</div>';
+
+            try {
+                const response = await fetch(`${backendUrl}/background/windows`);
+                const data = await response.json();
+
+                if (data.success) {
+                    listContainer.innerHTML = '';
+                    
+                    // 过滤掉空标题的窗口
+                    const windows = data.windows.filter(w => w.title && w.title.trim());
+                    
+                    if (windows.length === 0) {
+                        listContainer.innerHTML = '<div style="padding: 20px; color: #999;">未找到可用窗口</div>';
+                        return;
+                    }
+
+                    windows.forEach(win => {
+                        const item = document.createElement('div');
+                        item.className = 'window-item';
+                        item.innerHTML = `
+                            <span class="window-title" title="${win.title}">${win.title}</span>
+                            <span class="window-hwnd">${win.hwnd}</span>
+                        `;
+                        item.onclick = () => selectWindow(win, item);
+                        listContainer.appendChild(item);
+                    });
+
+                    addLog(`找到 ${windows.length} 个可用窗口`, 'success');
+                }
+            } catch (e) {
+                listContainer.innerHTML = '<div style="padding: 20px; color: #ff4b2b;">加载失败: ' + e.message + '</div>';
+                addLog('获取窗口列表失败: ' + e.message, 'error');
+            }
+        }
+
+        async function selectWindow(win, element) {
+            const backendUrl = document.getElementById('backendUrl').value;
+
+            // 更新UI选中状态
+            document.querySelectorAll('.window-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            element.classList.add('selected');
+
+            addLog(`正在设置目标窗口: ${win.title}`, 'info');
+
+            try {
+                const response = await fetch(`${backendUrl}/background/target`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ hwnd: win.hwnd })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    targetWindow = data;
+                    windowWidth = data.width;
+                    windowHeight = data.height;
+
+                    document.getElementById('selectedWindowInfo').innerHTML = `
+                        <strong>已选择:</strong> ${data.title}<br>
+                        <strong>尺寸:</strong> ${data.width}x${data.height}
+                    `;
+
+                    // 启用按钮
+                    document.getElementById('screenshotBtn').disabled = false;
+                    document.getElementById('analyzeBtn').disabled = false;
+                    document.getElementById('agentBtn').disabled = false;
+
+                    addLog(`目标窗口设置成功: ${data.title}`, 'success');
+
+                    // 自动截图
+                    await takeScreenshot();
+                } else {
+                    addLog('设置目标窗口失败: ' + data.error, 'error');
+                }
+            } catch (e) {
+                addLog('设置目标窗口失败: ' + e.message, 'error');
+            }
+        }
+
+        async function takeScreenshot() {
+            const backendUrl = document.getElementById('backendUrl').value;
+            const btn = document.getElementById('screenshotBtn');
+
+            btn.disabled = true;
+            btn.innerHTML = '截图中...<span class="loading"></span>';
+
+            try {
+                const response = await fetch(`${backendUrl}/background/screenshot`);
+                const data = await response.json();
+
+                if (data.success) {
+                    currentScreenshot = data.screenshot;
+                    windowWidth = data.width;
+                    windowHeight = data.height;
+
+                    const preview = document.getElementById('screenPreview');
+                    const placeholder = document.getElementById('previewPlaceholder');
+                    const container = document.getElementById('screenContainer');
+
+                    preview.src = currentScreenshot;
+                    preview.style.display = 'block';
+                    placeholder.style.display = 'none';
+                    container.classList.add('has-image');
+
+                    document.getElementById('windowRes').textContent = `窗口尺寸: ${windowWidth}x${windowHeight}`;
+                    document.getElementById('lastUpdate').textContent = `最后更新: ${new Date().toLocaleTimeString()}`;
+
+                    addLog('后台截图成功', 'success');
+                } else {
+                    addLog('截图失败: ' + data.error, 'error');
+                }
+            } catch (e) {
+                addLog('截图失败: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '📸 后台截图';
+            }
+        }
+
+        async function analyzeAndExecute() {
+            const backendUrl = document.getElementById('backendUrl').value;
+            const instruction = document.getElementById('instruction').value;
+            const btn = document.getElementById('analyzeBtn');
+
+            if (!currentScreenshot) {
+                addLog('请先截图', 'warning');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '分析中...<span class="loading"></span>';
+
+            try {
+                // 1. 发送给 AI 分析
+                const analyzeResp = await fetch(`${backendUrl}/analyze`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        image: currentScreenshot,
+                        screen_width: windowWidth,
+                        screen_height: windowHeight,
+                        instruction: instruction || '分析当前窗口内容'
+                    })
+                });
+                const analyzeData = await analyzeResp.json();
+
+                if (analyzeData.success) {
+                    addLog(`AI 建议操作: ${analyzeData.function_name || analyzeData.action}`, 'info');
+
+                    // 2. 后台执行操作
+                    const execResp = await fetch(`${backendUrl}/background/execute`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: analyzeData })
+                    });
+                    const execData = await execResp.json();
+
+                    if (execData.success) {
+                        addLog(`执行成功: ${execData.message}`, 'success');
+                    } else {
+                        addLog(`执行失败: ${execData.error}`, 'error');
+                    }
+
+                    // 3. 重新截图
+                    await takeScreenshot();
+                } else {
+                    addLog('AI 分析失败: ' + analyzeData.error, 'error');
+                }
+            } catch (e) {
+                addLog('操作失败: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '⚡ 分析并执行';
+            }
+        }
+
+        // 订阅 SSE 事件
+        function subscribeEvents(sessionId) {
+            const backendUrl = document.getElementById('backendUrl').value;
+            
+            // 关闭已有连接
+            if (eventSource) {
+                eventSource.close();
+            }
+            
+            eventSource = new EventSource(`${backendUrl}/agent/events/${sessionId}`);
+            
+            eventSource.addEventListener('connected', (e) => {
+                addLog('SSE 连接已建立', 'success');
+            });
+            
+            eventSource.addEventListener('screenshot', (e) => {
+                try {
+                    const event = JSON.parse(e.data);
+                    const data = event.data;
+                    
+                    // 更新截图预览
+                    currentScreenshot = data.screenshot;
+                    windowWidth = data.width;
+                    windowHeight = data.height;
+                    
+                    const preview = document.getElementById('screenPreview');
+                    const placeholder = document.getElementById('previewPlaceholder');
+                    const container = document.getElementById('screenContainer');
+                    
+                    preview.src = data.screenshot;
+                    preview.style.display = 'block';
+                    placeholder.style.display = 'none';
+                    container.classList.add('has-image');
+                    
+                    document.getElementById('windowRes').textContent = `窗口尺寸: ${data.width}x${data.height}`;
+                    document.getElementById('lastUpdate').textContent = `最后更新: ${new Date().toLocaleTimeString()}`;
+                    
+                    // 记录日志
+                    if (data.action) {
+                        addLog(`步骤 ${data.step}: 执行 ${data.action} 后截图`, 'info');
+                    } else {
+                        addLog(`步骤 ${data.step}: 截图更新`, 'info');
+                    }
+                } catch (err) {
+                    console.error('解析截图事件失败:', err);
+                }
+            });
+            
+            eventSource.addEventListener('action', (e) => {
+                try {
+                    const event = JSON.parse(e.data);
+                    const data = event.data;
+                    addLog(`执行操作: ${data.action}`, 'info');
+                } catch (err) {
+                    console.error('解析操作事件失败:', err);
+                }
+            });
+            
+            eventSource.addEventListener('complete', (e) => {
+                try {
+                    const event = JSON.parse(e.data);
+                    const data = event.data;
+                    addLog(`✅ 任务完成！总结: ${data.summary}`, 'success');
+                    alert('✅ 任务完成！\n\n' + data.summary);
+                } catch (err) {
+                    console.error('解析完成事件失败:', err);
+                }
+            });
+            
+            eventSource.addEventListener('error', (e) => {
+                if (e.data) {
+                    try {
+                        const event = JSON.parse(e.data);
+                        const data = event.data;
+                        addLog(`❌ 错误: ${data.error}`, 'error');
+                    } catch (err) {
+                        addLog('SSE 连接错误', 'error');
+                    }
+                }
+            });
+            
+            eventSource.onerror = () => {
+                addLog('SSE 连接断开，尝试重连...', 'error');
+            };
+        }
+        
+        // 取消订阅
+        function unsubscribeEvents() {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+                addLog('SSE 连接已关闭', 'info');
+            }
+        }
+
+        async function startAgent() {
+            const backendUrl = document.getElementById('backendUrl').value;
+            const instruction = document.getElementById('instruction').value;
+            const btn = document.getElementById('agentBtn');
+            const stopBtn = document.getElementById('stopBtn');
+
+            if (!instruction) {
+                alert('请输入任务指令！');
+                return;
+            }
+
+            if (!targetWindow) {
+                alert('请先选择目标窗口！');
+                return;
+            }
+
+            btn.disabled = true;
+            stopBtn.disabled = false;
+            btn.innerHTML = '运行中...<span class="loading"></span>';
+            addLog('启动后台 Agent 自动化...', 'info');
+            
+            // 订阅 SSE 事件以接收实时截图
+            subscribeEvents('background');
+
+            try {
+                // 使用特殊的 session_id 标识后台模式
+                const response = await fetch(`${backendUrl}/agent/start`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: 'background',
+                        task: instruction,
+                        screen_width: windowWidth,
+                        screen_height: windowHeight,
+                        mode: 'auto'
+                    })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    // 完成事件已通过 SSE 处理
+                    if (!data.completed) {
+                        addLog(`任务结束: ${data.summary || '未完成'}`, 'info');
+                    }
+                } else {
+                    addLog('Agent 执行失败: ' + data.error, 'error');
+                }
+            } catch (e) {
+                addLog('Agent 运行出错: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false;
+                stopBtn.disabled = true;
+                btn.innerHTML = '🤖 自动循环 (Agent)';
+                // 延迟关闭 SSE 以确保接收完所有事件
+                setTimeout(unsubscribeEvents, 2000);
+            }
+        }
+
+        async function stopAgent() {
+            const backendUrl = document.getElementById('backendUrl').value;
+            const stopBtn = document.getElementById('stopBtn');
+
+            stopBtn.disabled = true;
+            stopBtn.textContent = '正在停止...';
+            addLog('正在请求停止 Agent...', 'info');
+
+            try {
+                const response = await fetch(`${backendUrl}/agent/stop`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ session_id: 'background' })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    addLog('停止请求已发送: ' + data.message, 'success');
+                }
+            } catch (e) {
+                addLog('停止失败: ' + e.message, 'error');
+                stopBtn.disabled = false;
+                stopBtn.textContent = '🛑 停止';
+            } finally {
+                // 关闭 SSE 连接
+                unsubscribeEvents();
+            }
+        }
+
+        // 页面加载时自动检查连接
+        window.onload = function() {
+            setTimeout(checkConnection, 500);
+        };
+        
+        // 页面卸载时清理
+        window.addEventListener('beforeunload', () => {
+            unsubscribeEvents();
+        });
+    </script>
+</body>
+</html>

@@ -2,12 +2,14 @@
 Gemini计算机控制后端服务
 使用Gemini API分析截图并返回鼠标点击坐标
 """
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 import base64
 import os
 import logging
 import asyncio
+import json
+import queue
 from dotenv import load_dotenv
 
 # 导入自定义 Gemini 客户端
@@ -18,6 +20,8 @@ from tools import ToolCallHandler
 from tools.playwright_controller import PlaywrightController
 from tools.agent_controller import AgentController
 from tools.real_computer_controller import RealComputerController
+from tools.background_controller import BackgroundComputerController
+from tools.event_manager import event_manager
 
 # 配置日志
 logging.basicConfig(
@@ -51,11 +55,15 @@ playwright_controller = PlaywrightController()
 # 初始化真实电脑控制器
 real_computer_controller = RealComputerController()
 
+# 初始化后台控制器（用于后台窗口操作）
+background_controller = None  # 延迟初始化，需要指定目标窗口
+
 # 初始化 Agent 控制器
 agent_controller = AgentController(
     client=client,
     playwright_controller=playwright_controller,
     real_computer_controller=real_computer_controller,
+    background_controller=background_controller,
     model=GEMINI_MODEL,
     temperature=GEMINI_TEMPERATURE
 )
@@ -275,6 +283,213 @@ def real_info():
         "success": True,
         **real_computer_controller.get_screen_info()
     })
+
+# ============================================================================
+# 后台窗口控制接口
+# ============================================================================
+
+@app.route('/background/windows', methods=['GET'])
+def background_list_windows():
+    """
+    列出所有可见窗口
+    
+    返回：
+    {
+        "success": true,
+        "windows": [
+            {
+                "hwnd": 12345,
+                "title": "窗口标题",
+                "class": "窗口类名",
+                "rect": {"left": 0, "top": 0, "right": 1920, "bottom": 1080, "width": 1920, "height": 1080}
+            },
+            ...
+        ]
+    }
+    """
+    try:
+        from tools.background_controller import BackgroundController
+        controller = BackgroundController()
+        windows = controller.list_windows()
+        return jsonify({
+            "success": True,
+            "windows": windows,
+            "count": len(windows)
+        })
+    except ImportError as e:
+        return jsonify({
+            "success": False,
+            "error": "后台控制功能需要安装 pywin32: pip install pywin32"
+        }), 500
+    except Exception as e:
+        logger.exception(f"列出窗口失败: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/background/target', methods=['POST'])
+def background_set_target():
+    """
+    设置目标窗口
+    
+    请求体：
+    {
+        "title": "窗口标题（部分匹配）",
+        或
+        "hwnd": 窗口句柄
+    }
+    
+    返回：
+    {
+        "success": true,
+        "hwnd": 12345,
+        "title": "窗口标题",
+        "width": 1920,
+        "height": 1080
+    }
+    """
+    global background_controller
+    try:
+        data = request.json or {}
+        title = data.get('title')
+        hwnd = data.get('hwnd')
+        
+        if not title and not hwnd:
+            return jsonify({
+                "success": False,
+                "error": "需要提供 title 或 hwnd 参数"
+            }), 400
+        
+        background_controller = BackgroundComputerController(window_title=title)
+        
+        if hwnd:
+            success = background_controller.set_target(hwnd=hwnd)
+        else:
+            success = background_controller.set_target(window_title=title)
+        
+        if success:
+            info = background_controller.get_window_info()
+            return jsonify({
+                "success": True,
+                **info
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "error": "未找到匹配的窗口"
+            }), 404
+            
+    except ImportError as e:
+        return jsonify({
+            "success": False,
+            "error": "后台控制功能需要安装 pywin32: pip install pywin32"
+        }), 500
+    except Exception as e:
+        logger.exception(f"设置目标窗口失败: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/background/screenshot', methods=['GET', 'POST'])
+def background_screenshot():
+    """
+    截取目标窗口截图（后台截图，不需要窗口在前台）
+    
+    返回：
+    {
+        "success": true,
+        "screenshot": "data:image/png;base64,...",
+        "window_title": "窗口标题",
+        "width": 1920,
+        "height": 1080
+    }
+    """
+    global background_controller
+    try:
+        if not background_controller:
+            return jsonify({
+                "success": False,
+                "error": "请先使用 /background/target 设置目标窗口"
+            }), 400
+        
+        result = run_async(background_controller.take_screenshot())
+        return jsonify(result)
+        
+    except Exception as e:
+        logger.exception(f"后台截图失败: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/background/execute', methods=['POST'])
+def background_execute():
+    """
+    执行后台操作（不需要窗口焦点）
+    
+    请求体：
+    {
+        "action": {
+            "action": "mouse_click",
+            "x": 100,
+            "y": 200,
+            "button": "left"
+        }
+    }
+    
+    返回：
+    {
+        "success": true,
+        "message": "操作执行成功",
+        "action": "mouse_click"
+    }
+    """
+    global background_controller
+    try:
+        if not background_controller:
+            return jsonify({
+                "success": False,
+                "error": "请先使用 /background/target 设置目标窗口"
+            }), 400
+        
+        data = request.json or {}
+        action = data.get('action')
+        
+        if not action:
+            return jsonify({
+                "success": False,
+                "error": "缺少 action 参数"
+            }), 400
+        
+        result = run_async(background_controller.execute_action(action))
+        return jsonify(result)
+        
+    except Exception as e:
+        logger.exception(f"执行后台操作失败: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/background/info', methods=['GET'])
+def background_info():
+    """
+    获取当前目标窗口信息
+    
+    返回：
+    {
+        "success": true,
+        "hwnd": 12345,
+        "title": "窗口标题",
+        "class": "窗口类名",
+        "width": 1920,
+        "height": 1080
+    }
+    """
+    global background_controller
+    try:
+        if not background_controller:
+            return jsonify({
+                "success": False,
+                "error": "未设置目标窗口"
+            }), 400
+        
+        info = background_controller.get_window_info()
+        return jsonify(info)
+        
+    except Exception as e:
+        logger.exception(f"获取窗口信息失败: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 # ============================================================================
 # Playwright 浏览器控制接口
@@ -541,8 +756,21 @@ def agent_start():
         logger.info(f"启动 Agent 任务: {session_id}, 模式: {mode}")
         
         # 创建 Agent 会话
-        # 如果 session_id 是 'real'，则使用真实电脑模式
-        controller_mode = 'real' if session_id == 'real' else 'browser'
+        # 根据 session_id 判断控制模式
+        if session_id == 'real':
+            controller_mode = 'real'
+        elif session_id == 'background':
+            controller_mode = 'background'
+            # 确保后台控制器已设置目标窗口
+            if not background_controller:
+                return jsonify({
+                    "success": False,
+                    "error": "请先使用 /background/target 设置目标窗口"
+                }), 400
+            # 更新 agent_controller 的后台控制器引用
+            agent_controller.background = background_controller
+        else:
+            controller_mode = 'browser'
         agent_controller.create_session(session_id, task, screen_width, screen_height, mode=controller_mode)
         
         if mode == 'auto':
@@ -741,6 +969,97 @@ def agent_stop():
             "success": False,
             "error": str(e)
         }), 500
+
+# ============================================================================
+# SSE 实时事件推送接口
+# ============================================================================
+
+@app.route('/agent/events/<session_id>', methods=['GET'])
+def agent_events(session_id):
+    """
+    SSE 事件流端点 - 订阅指定会话的实时事件
+    
+    URL 参数：
+    - session_id: 会话ID (例如: real, background, 或浏览器会话UUID)
+    
+    返回：
+    Server-Sent Events 流，事件格式：
+    
+    event: screenshot
+    data: {"type": "screenshot", "data": {"screenshot": "base64...", "step": 1, ...}}
+    
+    event: action
+    data: {"type": "action", "data": {"action": "mouse_click", ...}}
+    
+    event: complete
+    data: {"type": "complete", "data": {"success": true, "summary": "..."}}
+    
+    event: error
+    data: {"type": "error", "data": {"error": "..."}}
+    """
+    def generate():
+        # 订阅事件
+        event_queue = event_manager.subscribe(session_id)
+        logger.info(f"SSE 客户端连接: {session_id}")
+        
+        try:
+            # 发送连接成功事件
+            yield f"event: connected\ndata: {json.dumps({'session_id': session_id})}\n\n"
+            
+            while True:
+                try:
+                    # 等待事件，超时30秒发送心跳
+                    event = event_queue.get(timeout=30)
+                    
+                    # 格式化 SSE 消息
+                    event_type = event.get("type", "message")
+                    event_data = json.dumps(event)
+                    
+                    yield f"event: {event_type}\ndata: {event_data}\n\n"
+                    
+                except queue.Empty:
+                    # 超时，发送心跳保持连接
+                    yield f"event: heartbeat\ndata: {json.dumps({'timestamp': asyncio.get_event_loop().time() if asyncio.get_event_loop().is_running() else 0})}\n\n"
+                    
+        except GeneratorExit:
+            logger.info(f"SSE 客户端断开: {session_id}")
+        finally:
+            # 取消订阅
+            event_manager.unsubscribe(session_id, event_queue)
+    
+    response = Response(
+        generate(),
+        mimetype='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            'X-Accel-Buffering': 'no',  # 禁用 nginx 缓冲
+            'Access-Control-Allow-Origin': '*'
+        }
+    )
+    return response
+
+
+@app.route('/agent/events', methods=['GET'])
+def agent_events_query():
+    """
+    SSE 事件流端点 - 通过查询参数指定会话ID
+    
+    查询参数：
+    - session_id: 会话ID
+    
+    返回：
+    重定向到带路径参数的端点
+    """
+    session_id = request.args.get('session_id')
+    if not session_id:
+        return jsonify({
+            "success": False,
+            "error": "缺少session_id参数"
+        }), 400
+    
+    return agent_events(session_id)
+
 
 if __name__ == '__main__':
     # 检查API密钥

@@ -15,6 +15,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from gemini_client import GeminiClient, ConversationManager
 from .playwright_controller import PlaywrightController
 from .real_computer_controller import RealComputerController
+from .background_controller import BackgroundComputerController
 from .computer_control import (
     get_all_tool_declarations,
     execute_tool_call,
@@ -22,6 +23,7 @@ from .computer_control import (
     denormalize_y
 )
 from .tool_converter import convert_tools_to_rest_format
+from .event_manager import event_manager
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +45,7 @@ class AgentController:
         client: GeminiClient,
         playwright_controller: PlaywrightController,
         real_computer_controller: RealComputerController = None,
+        background_controller: BackgroundComputerController = None,
         model: str = "gemini-3-pro-preview",
         temperature: float = 1.0
     ):
@@ -53,12 +56,14 @@ class AgentController:
             client: Gemini API 客户端
             playwright_controller: Playwright 控制器
             real_computer_controller: 真实电脑控制器
+            background_controller: 后台窗口控制器
             model: 使用的模型名称
             temperature: 温度参数
         """
         self.client = client
         self.playwright = playwright_controller
         self.real_computer = real_computer_controller
+        self.background = background_controller
         self.model = model
         self.temperature = temperature
         self.tool_declarations = get_all_tool_declarations()
@@ -145,6 +150,13 @@ class AgentController:
             # 1. 截取当前状态
             if session.get("mode") == "real":
                 screenshot_result = await self.real_computer.take_screenshot()
+            elif session.get("mode") == "background":
+                if not self.background:
+                    return {
+                        "success": False,
+                        "error": "后台控制器未初始化，请先设置目标窗口"
+                    }
+                screenshot_result = await self.background.take_screenshot()
             else:
                 screenshot_result = await self.playwright.take_screenshot(session_id)
                 
@@ -156,6 +168,17 @@ class AgentController:
             
             screenshot_data = screenshot_result["screenshot"]
             current_url = screenshot_result.get("url", "Desktop")
+            
+            # 发布截图事件到前端
+            event_manager.publish_screenshot(
+                session_id=session_id,
+                screenshot=screenshot_data,
+                step=session["step_count"] + 1,
+                width=screenshot_result.get("width", session["screen_width"]),
+                height=screenshot_result.get("height", session["screen_height"]),
+                url=current_url,
+                action=None  # 首次截图，还没执行操作
+            )
             
             # 提取 base64 数据
             if ',' in screenshot_data:
@@ -170,7 +193,12 @@ class AgentController:
             
             if user_message:
                 # 首次调用：用户任务 + 截图
-                mode_name = "真实电脑控制" if session.get("mode") == "real" else "浏览器自动化"
+                mode_names = {
+                    "real": "真实电脑控制",
+                    "background": "后台窗口控制",
+                    "browser": "浏览器自动化"
+                }
+                mode_name = mode_names.get(session.get("mode"), "浏览器自动化")
                 prompt = f"""你是一个{mode_name}助手。用户给你一个任务，你需要通过调用工具来完成它。
 
 当前位置: {current_url}
@@ -328,6 +356,9 @@ class AgentController:
                         if session.get("mode") == "real":
                             # 在真实电脑中执行
                             exec_result = await self.real_computer.execute_action(action_data)
+                        elif session.get("mode") == "background":
+                            # 在后台窗口中执行
+                            exec_result = await self.background.execute_action(action_data)
                         else:
                             # 在浏览器中执行
                             exec_result = await self.playwright.execute_action(session_id, action_data)
@@ -348,11 +379,26 @@ class AgentController:
                 # 截取执行后的截图
                 if session.get("mode") == "real":
                     after_screenshot = await self.real_computer.take_screenshot()
+                elif session.get("mode") == "background":
+                    after_screenshot = await self.background.take_screenshot()
                 else:
                     after_screenshot = await self.playwright.take_screenshot(session_id)
                     
                 if after_screenshot.get("success"):
                     after_screenshot_data = after_screenshot["screenshot"]
+                    
+                    # 发布操作后截图事件到前端
+                    last_action = results[-1][0] if results else None
+                    event_manager.publish_screenshot(
+                        session_id=session_id,
+                        screenshot=after_screenshot_data,
+                        step=session["step_count"] + 1,
+                        width=after_screenshot.get("width", session["screen_width"]),
+                        height=after_screenshot.get("height", session["screen_height"]),
+                        url=after_screenshot.get("url", current_url),
+                        action=last_action
+                    )
+                    
                     if ',' in after_screenshot_data:
                         after_screenshot_base64 = after_screenshot_data.split(',')[1]
                     else:
@@ -451,6 +497,13 @@ class AgentController:
         # 检查是否完成
         session = self.sessions.get(session_id)
         if session and session.get("completed"):
+            # 发布完成事件
+            event_manager.publish_complete(
+                session_id=session_id,
+                success=True,
+                summary=session.get("summary", "任务已完成"),
+                total_steps=len(all_steps)
+            )
             return {
                 "success": True,
                 "completed": True,
@@ -459,6 +512,12 @@ class AgentController:
                 "steps": all_steps
             }
         elif len(all_steps) >= max_steps:
+            # 发布错误事件
+            event_manager.publish_error(
+                session_id=session_id,
+                error=f"达到最大步骤数 {max_steps}",
+                step=len(all_steps)
+            )
             return {
                 "success": False,
                 "error": f"达到最大步骤数 {max_steps}",
@@ -467,6 +526,12 @@ class AgentController:
                 "steps": all_steps
             }
         else:
+            # 发布错误事件
+            event_manager.publish_error(
+                session_id=session_id,
+                error="任务未完成",
+                step=len(all_steps)
+            )
             return {
                 "success": False,
                 "error": "任务未完成",

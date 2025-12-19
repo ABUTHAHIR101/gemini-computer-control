@@ -20,6 +20,15 @@ from .computer_control import (
 )
 from .handler import ToolCallHandler
 
+
+from .background_controller import (
+    BackgroundController,
+    BackgroundComputerController,
+    HAS_WIN32,
+    HAS_PYWINAUTO
+)
+BACKGROUND_AVAILABLE = True
+
 __all__ = [
     'mouse_click',
     'mouse_drag',
@@ -35,5 +44,11 @@ __all__ = [
     'execute_tool_call',
     'denormalize_x',
     'denormalize_y',
-    'ToolCallHandler'
+    'ToolCallHandler',
+    # 后台控制器
+    'BackgroundController',
+    'BackgroundComputerController',
+    'BACKGROUND_AVAILABLE',
+    'HAS_WIN32',
+    'HAS_PYWINAUTO'
 ]
