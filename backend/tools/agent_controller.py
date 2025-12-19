@@ -199,10 +199,17 @@ class AgentController:
                     "browser": "浏览器自动化"
                 }
                 mode_name = mode_names.get(session.get("mode"), "浏览器自动化")
+                
+                # 构建标签页信息（如果存在）
+                tabs_info = ""
+                if "tabs" in screenshot_result:
+                    tabs_list = "\n".join([f"- [{t['index']}] {t['title']} ({t['url']}){' [当前活跃]' if t['is_active'] else ''}" for t in screenshot_result["tabs"]])
+                    tabs_info = f"\n当前打开的标签页列表:\n{tabs_list}\n你可以使用 switch_tab(index) 切换标签页。\n"
+
                 prompt = f"""你是一个{mode_name}助手。用户给你一个任务，你需要通过调用工具来完成它。
 
 当前位置: {current_url}
-屏幕尺寸: {session['screen_width']}x{session['screen_height']}
+屏幕尺寸: {session['screen_width']}x{session['screen_height']}{tabs_info}
 
 用户任务: {user_message}
 
@@ -217,10 +224,16 @@ class AgentController:
 请分析当前截图，决定下一步操作。当你认为任务完全完成时，调用 task_complete 工具。"""
             else:
                 # 后续调用：继续提示 + 截图
+                # 构建标签页信息（如果存在）
+                tabs_info = ""
+                if "tabs" in screenshot_result:
+                    tabs_list = "\n".join([f"- [{t['index']}] {t['title']} ({t['url']}){' [当前活跃]' if t['is_active'] else ''}" for t in screenshot_result["tabs"]])
+                    tabs_info = f"\n当前打开的标签页列表:\n{tabs_list}\n你可以使用 switch_tab(index) 切换标签页。\n"
+
                 prompt = f"""继续执行任务。
 
 当前位置: {current_url}
-已执行步骤: {session['step_count']}
+已执行步骤: {session['step_count']}{tabs_info}
 
 提醒：
 - 你可以一次返回多个函数调用来提高效率

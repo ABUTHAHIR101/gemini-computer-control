@@ -377,6 +377,11 @@
                 </select>
             </div>
 
+            <div class="input-group" style="flex-direction: row; align-items: center; gap: 10px; padding-top: 25px;">
+                <input type="checkbox" id="headlessMode" checked style="width: 20px; height: 20px; cursor: pointer;">
+                <label for="headlessMode" style="cursor: pointer; margin-bottom: 0;">无头模式 (真正的后台运行)</label>
+            </div>
+
             <div class="input-group full-width">
                 <label for="instruction">AI指令/任务</label>
                 <textarea
@@ -416,6 +421,10 @@
                 <div class="browser-toolbar">
                     <span>🌐</span>
                     <input type="text" id="currentUrl" readonly placeholder="当前URL">
+                    <button class="btn-secondary" onclick="refreshTabs()" style="padding: 4px 8px; font-size: 12px; width: auto;">刷新标签页</button>
+                </div>
+                <div id="tabList" style="background: #eee; padding: 5px; display: flex; gap: 5px; overflow-x: auto; border-bottom: 1px solid #ccc;">
+                    <!-- 标签页列表 -->
                 </div>
                 <div class="browser-content">
                     <img id="browserScreenshot" alt="浏览器截图">
@@ -452,6 +461,7 @@
         let agentRunning = false;
         let taskCompleted = false;
         let eventSource = null;  // SSE 连接
+        let currentTabs = [];
 
         // 检查后端服务状态
         async function checkBackendStatus() {
@@ -498,6 +508,7 @@
             const targetUrl = document.getElementById('targetUrl').value;
             const width = parseInt(document.getElementById('browserWidth').value);
             const height = parseInt(document.getElementById('browserHeight').value);
+            const headless = document.getElementById('headlessMode').checked;
             const launchBtn = document.getElementById('launchBtn');
 
             if (!await checkBackendStatus()) {
@@ -517,7 +528,7 @@
                         url: targetUrl,
                         width: width,
                         height: height,
-                        headless: false
+                        headless: headless
                     })
                 });
 
@@ -718,6 +729,9 @@
                     if (data.url) {
                         document.getElementById('currentUrl').value = data.url;
                     }
+                    
+                    // 自动刷新标签页列表
+                    refreshTabs();
                     
                     // 记录日志
                     if (data.action) {
@@ -954,6 +968,59 @@
                     alert('❌ 截图失败: ' + error.message);
                 }
                 return null;
+            }
+        }
+
+        // 刷新标签页列表
+        async function refreshTabs() {
+            if (!sessionId) return;
+            const backendUrl = document.getElementById('backendUrl').value;
+            try {
+                const response = await fetch(`${backendUrl}/playwright/tabs?session_id=${sessionId}`);
+                const data = await response.json();
+                if (data.success) {
+                    currentTabs = data.tabs;
+                    const tabList = document.getElementById('tabList');
+                    tabList.innerHTML = '';
+                    data.tabs.forEach(tab => {
+                        const tabBtn = document.createElement('button');
+                        tabBtn.className = tab.index === data.active_index ? 'btn-primary' : 'btn-secondary';
+                        tabBtn.style.padding = '4px 12px';
+                        tabBtn.style.fontSize = '12px';
+                        tabBtn.style.width = 'auto';
+                        tabBtn.style.whiteSpace = 'nowrap';
+                        tabBtn.style.maxWidth = '150px';
+                        tabBtn.style.overflow = 'hidden';
+                        tabBtn.style.textOverflow = 'ellipsis';
+                        tabBtn.textContent = tab.title || '新标签页';
+                        tabBtn.title = tab.url;
+                        tabBtn.onclick = () => switchTab(tab.index);
+                        tabList.appendChild(tabBtn);
+                    });
+                }
+            } catch (e) {
+                console.error('刷新标签页失败:', e);
+            }
+        }
+
+        // 切换标签页
+        async function switchTab(index) {
+            if (!sessionId) return;
+            const backendUrl = document.getElementById('backendUrl').value;
+            try {
+                const response = await fetch(`${backendUrl}/playwright/switch_tab`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ session_id: sessionId, index: index })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    addLog(`已切换到标签页 ${index}`, 'success');
+                    await takeScreenshot();
+                    await refreshTabs();
+                }
+            } catch (e) {
+                addLog(`切换标签页失败: ${e.message}`, 'error');
             }
         }
 

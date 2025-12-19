@@ -668,6 +668,8 @@ TOOL_IMPLEMENTATIONS: Dict[str, Callable] = {
     "click_and_type": click_and_type,
     "wait": wait,
     "task_complete": task_complete,
+    "switch_tab": lambda **kwargs: {"status": "success", "message": "正在切换标签页"},
+    "list_tabs": lambda **kwargs: {"status": "success", "message": "正在获取标签页列表"},
 }
 
 # 所有工具声明的列表
@@ -683,6 +685,28 @@ TOOL_DECLARATIONS = [
     CLICK_AND_TYPE_DECLARATION,
     WAIT_DECLARATION,
     TASK_COMPLETE_DECLARATION,
+    {
+        "name": "switch_tab",
+        "description": "在浏览器的多个标签页之间切换。仅在浏览器自动化模式下有效。",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "index": {
+                    "type": "INTEGER",
+                    "description": "目标标签页的索引（从0开始）。"
+                }
+            },
+            "required": ["index"]
+        }
+    },
+    {
+        "name": "list_tabs",
+        "description": "列出浏览器当前所有打开的标签页及其标题和URL。仅在浏览器自动化模式下有效。",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {}
+        }
+    }
 ]
 
 

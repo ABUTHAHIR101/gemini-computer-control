@@ -705,6 +705,35 @@ def playwright_sessions():
             "error": str(e)
         }), 500
 
+@app.route('/playwright/tabs', methods=['GET'])
+def playwright_list_tabs():
+    """列出指定会话的所有标签页"""
+    try:
+        session_id = request.args.get('session_id')
+        if not session_id:
+            return jsonify({"success": False, "error": "缺少session_id参数"}), 400
+        
+        result = run_async(playwright_controller.execute_action(session_id, {"action": "list_tabs"}))
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/playwright/switch_tab', methods=['POST'])
+def playwright_switch_tab():
+    """切换标签页"""
+    try:
+        data = request.json or {}
+        session_id = data.get('session_id')
+        index = data.get('index')
+        
+        if not session_id or index is None:
+            return jsonify({"success": False, "error": "缺少参数"}), 400
+        
+        result = run_async(playwright_controller.execute_action(session_id, {"action": "switch_tab", "index": index}))
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 # ============================================================================
 # Agent 自动化接口
 # ============================================================================

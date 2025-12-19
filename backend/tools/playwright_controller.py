@@ -15,15 +15,26 @@ logger = logging.getLogger(__name__)
 class PlaywrightSession:
     """
     Playwright 浏览器会话
-    管理单个浏览器实例的生命周期
+    管理单个浏览器实例的生命周期，支持多标签页
     """
     
-    def __init__(self, session_id: str, browser: Browser, context: BrowserContext, page: Page):
+    def __init__(self, session_id: str, browser: Browser, context: BrowserContext):
         self.session_id = session_id
         self.browser = browser
         self.context = context
-        self.page = page
+        self.active_page_index = 0
         self.created_at = asyncio.get_event_loop().time()
+        
+    @property
+    def page(self) -> Page:
+        """获取当前活跃页面"""
+        pages = self.context.pages
+        if not pages:
+            return None
+        # 确保索引不越界
+        if self.active_page_index >= len(pages):
+            self.active_page_index = len(pages) - 1
+        return pages[self.active_page_index]
         
     async def close(self):
         """关闭浏览器会话"""
@@ -101,7 +112,7 @@ class PlaywrightController:
             await page.goto(url, wait_until='networkidle', timeout=30000)
             
             # 保存会话
-            session = PlaywrightSession(session_id, browser, context, page)
+            session = PlaywrightSession(session_id, browser, context)
             async with self._lock:
                 self.sessions[session_id] = session
             
@@ -123,13 +134,13 @@ class PlaywrightController:
     
     async def take_screenshot(self, session_id: str) -> Dict[str, Any]:
         """
-        截取浏览器截图
+        截取浏览器截图并获取标签页列表
         
         Args:
             session_id: 会话ID
         
         Returns:
-            包含base64编码截图的字典
+            包含base64编码截图和标签页信息的字典
         """
         try:
             session = self.sessions.get(session_id)
@@ -143,12 +154,28 @@ class PlaywrightController:
             screenshot_bytes = await session.page.screenshot(type='png', full_page=False)
             screenshot_base64 = f"data:image/png;base64,{base64.b64encode(screenshot_bytes).decode()}"
             
-            logger.info(f"会话 {session_id} 截图成功")
+            # 获取所有标签页信息
+            pages = session.context.pages
+            tabs = []
+            for i, p in enumerate(pages):
+                try:
+                    tabs.append({
+                        "index": i,
+                        "title": await p.title(),
+                        "url": p.url,
+                        "is_active": i == session.active_page_index
+                    })
+                except:
+                    continue
+            
+            logger.info(f"会话 {session_id} 截图成功，当前共有 {len(tabs)} 个标签页")
             
             return {
                 "success": True,
                 "screenshot": screenshot_base64,
-                "url": session.page.url
+                "url": session.page.url,
+                "tabs": tabs,
+                "active_index": session.active_page_index
             }
             
         except Exception as e:
@@ -273,6 +300,26 @@ class PlaywrightController:
                     await page.keyboard.press(self._normalize_key(keys))
                     message = f"按键: {keys}"
             
+            elif action_type == 'switch_tab':
+                index = action.get('index', 0)
+                pages = session.context.pages
+                if 0 <= index < len(pages):
+                    session.active_page_index = index
+                    await pages[index].bring_to_front()
+                    message = f"切换到标签页 {index}: {pages[index].url}"
+                else:
+                    return {"success": False, "error": f"无效的标签页索引: {index}"}
+
+            elif action_type == 'list_tabs':
+                pages = session.context.pages
+                tabs = [{"index": i, "title": await p.title(), "url": p.url} for i, p in enumerate(pages)]
+                return {
+                    "success": True,
+                    "tabs": tabs,
+                    "active_index": session.active_page_index,
+                    "message": f"当前共有 {len(pages)} 个标签页"
+                }
+
             else:
                 return {
                     "success": False,
