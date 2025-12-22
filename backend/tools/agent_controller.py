@@ -489,6 +489,52 @@ class AgentController:
                             logger.info(f"清空笔记: {cleared_count} 条 (筛选: {category_filter})")
                             # 发布笔记更新事件到前端
                             event_manager.publish_notes(session_id, session["notes"], "clear")
+                    elif tool_name == "read_clipboard":
+                        # 读取剪切板
+                        import pyperclip
+                        try:
+                            clipboard_content = pyperclip.paste()
+                            result = {
+                                "status": "success",
+                                "content": clipboard_content,
+                                "length": len(clipboard_content) if clipboard_content else 0
+                            }
+                            logger.info(f"读取剪切板: {len(clipboard_content) if clipboard_content else 0} 字符")
+                            
+                            # 如果需要保存到笔记
+                            if args.get("save_to_note", False) and clipboard_content:
+                                import datetime
+                                note = {
+                                    "content": f"[剪切板内容] {clipboard_content[:500]}{'...' if len(clipboard_content) > 500 else ''}",
+                                    "category": args.get("note_category", "info"),
+                                    "timestamp": datetime.datetime.now().isoformat(),
+                                    "step": session["step_count"] + 1
+                                }
+                                session["notes"].append(note)
+                                result["saved_to_note"] = True
+                                event_manager.publish_notes(session_id, session["notes"], "add")
+                        except Exception as e:
+                            result = {
+                                "status": "error",
+                                "message": f"读取剪切板失败: {str(e)}"
+                            }
+                    elif tool_name == "write_clipboard":
+                        # 写入剪切板
+                        import pyperclip
+                        try:
+                            text = args.get("text", "")
+                            pyperclip.copy(text)
+                            result = {
+                                "status": "success",
+                                "message": f"已写入剪切板: {len(text)} 字符",
+                                "preview": text[:100] + "..." if len(text) > 100 else text
+                            }
+                            logger.info(f"写入剪切板: {len(text)} 字符")
+                        except Exception as e:
+                            result = {
+                                "status": "error",
+                                "message": f"写入剪切板失败: {str(e)}"
+                            }
                     else:
                         # 本地执行
                         result = execute_tool_call(tool_name, args)

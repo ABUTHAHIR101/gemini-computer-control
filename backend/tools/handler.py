@@ -440,6 +440,19 @@ class ToolCallHandler:
                     "confirm": args.get('confirm', False)
                 })
             
+            elif tool_name == "read_clipboard":
+                response.update({
+                    "action": "read_clipboard",
+                    "save_to_note": args.get('save_to_note', False),
+                    "note_category": args.get('note_category', 'info')
+                })
+            
+            elif tool_name == "write_clipboard":
+                response.update({
+                    "action": "write_clipboard",
+                    "text": args.get('text', '')
+                })
+            
             return response
             
         except Exception as e:

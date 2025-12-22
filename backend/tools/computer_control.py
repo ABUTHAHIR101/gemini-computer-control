@@ -677,6 +677,8 @@ TOOL_IMPLEMENTATIONS: Dict[str, Callable] = {
     "add_note": lambda **kwargs: {"status": "success", "message": "笔记已添加"},
     "list_notes": lambda **kwargs: {"status": "success", "message": "获取笔记列表"},
     "clear_notes": lambda **kwargs: {"status": "success", "message": "笔记已清空"},
+    "read_clipboard": lambda **kwargs: {"status": "success", "message": "读取剪切板"},
+    "write_clipboard": lambda **kwargs: {"status": "success", "message": "写入剪切板"},
 }
 
 # 所有工具声明的列表
@@ -829,6 +831,39 @@ TOOL_DECLARATIONS = [
                 }
             },
             "required": ["confirm"]
+        }
+    },
+    {
+        "name": "read_clipboard",
+        "description": "读取系统剪切板的文本内容。可用于获取用户复制的信息、网页上复制的文本等。读取后可以将内容保存到笔记中。",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "save_to_note": {
+                    "type": "BOOLEAN",
+                    "description": "是否自动将剪切板内容保存到笔记。默认为 false。"
+                },
+                "note_category": {
+                    "type": "STRING",
+                    "enum": ["info", "progress", "todo", "important", "error"],
+                    "description": "如果保存到笔记，使用的分类。默认为 info。"
+                }
+            },
+            "required": []
+        }
+    },
+    {
+        "name": "write_clipboard",
+        "description": "将文本写入系统剪切板。可用于准备要粘贴的内容。",
+        "parameters": {
+            "type": "OBJECT",
+            "properties": {
+                "text": {
+                    "type": "STRING",
+                    "description": "要写入剪切板的文本内容。"
+                }
+            },
+            "required": ["text"]
         }
     }
 ]
