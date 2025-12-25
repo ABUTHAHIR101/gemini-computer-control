@@ -50,6 +50,17 @@ class ToolCallHandler:
         
         logger.info(f"工具调用处理器初始化完成，加载了 {len(self.tool_declarations)} 个工具")
     
+    def update_config(self, client: GeminiClient, model: str):
+        """
+        更新配置
+        
+        Args:
+            client: 新的 Gemini 客户端实例
+            model: 新的模型名称
+        """
+        self.client = client
+        self.model = model
+        logger.info(f"ToolCallHandler 配置已更新: model={model}")
     
     def analyze_image_with_tools(
         self,

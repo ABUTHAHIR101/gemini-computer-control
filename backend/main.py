@@ -2,7 +2,7 @@
 Gemini计算机控制后端服务
 使用Gemini API分析截图并返回鼠标点击坐标
 """
-from flask import Flask, request, jsonify, Response
+from flask import Flask, request, jsonify, Response, send_from_directory
 from flask_cors import CORS
 import base64
 import os
@@ -132,6 +132,63 @@ def health_check():
         "temperature": GEMINI_TEMPERATURE,
         "tools_loaded": len(tool_handler.get_available_tools())
     })
+
+# ============================================================================
+# 静态文件服务 (将前端集成到后端服务中)
+# ============================================================================
+
+@app.route('/')
+def serve_index():
+    """提供前端主页"""
+    return send_from_directory('../frontend', 'index.html')
+
+@app.route('/<path:filename>')
+def serve_static(filename):
+    """提供前端静态资源"""
+    return send_from_directory('../frontend', filename)
+
+@app.route('/config', methods=['POST'])
+def update_config():
+    """更新全局配置"""
+    global client, tool_handler, agent_controller, GEMINI_MODEL
+    try:
+        data = request.json or {}
+        api_key = data.get('api_key')
+        base_url = data.get('base_url')
+        model = data.get('model')
+        
+        if not api_key:
+            # 如果没提供 api_key，尝试从环境变量获取
+            api_key = os.getenv('GEMINI_API_KEY')
+        
+        if not api_key:
+            return jsonify({"success": False, "error": "API Key is required"}), 400
+            
+        if model:
+            GEMINI_MODEL = model
+            
+        # 重新初始化客户端
+        client = GeminiClient(
+            api_key=api_key,
+            model=GEMINI_MODEL,
+            base_url=base_url
+        )
+        
+        # 更新处理器引用
+        tool_handler.update_config(client, GEMINI_MODEL)
+        agent_controller.update_config(client, GEMINI_MODEL)
+        
+        logger.info(f"配置已通过 API 更新: model={GEMINI_MODEL}, base_url={base_url}")
+        
+        return jsonify({
+            "success": True, 
+            "message": "配置更新成功",
+            "model": GEMINI_MODEL,
+            "base_url": base_url or "default"
+        })
+    except Exception as e:
+        logger.exception(f"更新配置失败: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/tools', methods=['GET'])
 def list_tools():

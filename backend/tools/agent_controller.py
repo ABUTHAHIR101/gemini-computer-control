@@ -78,6 +78,23 @@ class AgentController:
         
         logger.info(f"Agent 控制器初始化完成，加载了 {len(self.tool_declarations)} 个工具")
     
+    def update_config(self, client: GeminiClient, model: str):
+        """
+        更新配置
+        
+        Args:
+            client: 新的 Gemini 客户端实例
+            model: 新的模型名称
+        """
+        self.client = client
+        self.model = model
+        # 更新所有存量会话的 client
+        for session_id in self.sessions:
+            if "conversation" in self.sessions[session_id]:
+                self.sessions[session_id]["conversation"].client = client
+        
+        logger.info(f"AgentController 配置已更新: model={model}, 更新了 {len(self.sessions)} 个活跃会话")
+
     def create_session(
         self,
         session_id: str,

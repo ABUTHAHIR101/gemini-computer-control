@@ -3,636 +3,1068 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini计算机控制 - 截图测试</title>
+    <title>Gemini Computer Control - Unified Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        md3: {
+                            primary: '#6750A4',
+                            onPrimary: '#FFFFFF',
+                            primaryContainer: '#EADDFF',
+                            onPrimaryContainer: '#21005D',
+                            secondary: '#625B71',
+                            onSecondary: '#FFFFFF',
+                            secondaryContainer: '#E8DEF8',
+                            onSecondaryContainer: '#1D192B',
+                            tertiary: '#7D5260',
+                            onTertiary: '#FFFFFF',
+                            tertiaryContainer: '#FFD8E4',
+                            onTertiaryContainer: '#31111D',
+                            error: '#B3261E',
+                            onError: '#FFFFFF',
+                            errorContainer: '#F9DEDC',
+                            onErrorContainer: '#410E0B',
+                            background: '#FFFBFE',
+                            onBackground: '#1C1B1F',
+                            surface: '#FFFBFE',
+                            onSurface: '#1C1B1F',
+                            surfaceVariant: '#E7E0EB',
+                            onSurfaceVariant: '#49454F',
+                            outline: '#79747E',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Google Sans', 'Roboto', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'md3-1': '0 1px 2px 0 rgba(0, 0, 0, 0.3), 0 1px 3px 1px rgba(0, 0, 0, 0.15)',
+                        'md3-2': '0 1px 2px 0 rgba(0, 0, 0, 0.3), 0 2px 6px 2px rgba(0, 0, 0, 0.15)',
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Microsoft YaHei', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
+            background-image: url('assets/bg.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            height: 100vh;
+            width: 100vw;
         }
-
-        .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            padding: 40px;
-            max-width: 800px;
-            width: 100%;
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
-
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 10px;
-            font-size: 28px;
+        .tab-active {
+            background-color: #EADDFF;
+            color: #21005D;
         }
-
-        .subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 14px;
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 3px;
+            height: 3px;
         }
-
-        .control-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
         }
-
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
         }
-
-        label {
-            color: #555;
-            font-weight: 600;
-            font-size: 14px;
+        .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+            background-color: rgba(103, 80, 164, 0.2);
         }
-
-        input[type="text"],
-        textarea {
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-        }
-
-        input[type="text"]:focus,
-        textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        textarea {
-            resize: vertical;
-            min-height: 80px;
-            font-family: inherit;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 15px;
-            margin-top: 10px;
-        }
-
-        button {
-            flex: 1;
-            padding: 14px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-secondary {
-            background: #f0f0f0;
-            color: #333;
-        }
-
-        .btn-secondary:hover {
-            background: #e0e0e0;
-        }
-
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-
-        .preview-section {
-            margin-top: 30px;
-            padding-top: 30px;
-            border-top: 2px solid #f0f0f0;
-        }
-
-        .preview-title {
-            color: #555;
-            font-weight: 600;
-            margin-bottom: 15px;
-            font-size: 16px;
-        }
-
-        .image-container {
-            position: relative;
-            display: none;
-            margin-bottom: 15px;
-        }
-
-        #screenshotPreview {
-            width: 100%;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            display: block;
-        }
-
-        #clickCanvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-
-        .result-box {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 20px;
-            display: none;
-            margin-top: 15px;
-        }
-
-        .result-box.success {
-            background: #d4edda;
-            border: 2px solid #c3e6cb;
-        }
-
-        .result-box.error {
-            background: #f8d7da;
-            border: 2px solid #f5c6cb;
-        }
-
-        .result-title {
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: #333;
-        }
-
-        .result-content {
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-            color: #555;
-            white-space: pre-wrap;
-            word-break: break-all;
-        }
-
-        .status-indicator {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
+        .loading-spinner {
+            border: 2px solid rgba(103, 80, 164, 0.1);
+            border-top: 2px solid #6750A4;
             border-radius: 50%;
-            margin-right: 8px;
-        }
-
-        .status-indicator.online {
-            background: #28a745;
-            box-shadow: 0 0 8px #28a745;
-        }
-
-        .status-indicator.offline {
-            background: #dc3545;
-        }
-
-        .loading {
-            display: inline-block;
             width: 16px;
             height: 16px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin-left: 10px;
         }
-
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
-        .info-box {
-            background: #e7f3ff;
-            border-left: 4px solid #2196F3;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 4px;
-            font-size: 14px;
-            color: #555;
-        }
     </style>
 </head>
-<body>
-    <div class="container">
-        <h1>🤖 Gemini计算机控制</h1>
-        <p class="subtitle">基于Gemini AI的屏幕分析与自动点击系统</p>
-
-        <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 20px;">
-            <a href="playwright_sandbox.html" style="text-decoration: none; color: #667eea; font-weight: bold;">🌐 浏览器沙盒</a>
-            <span style="color: #ccc;">|</span>
-            <a href="real_computer_sandbox.html" style="text-decoration: none; color: #ff9a9e; font-weight: bold;">🖥️ 真实电脑沙盒</a>
-        </div>
-
-        <div class="info-box">
-            <strong>使用说明：</strong><br>
-            1. 选择操作模式：<strong>浏览器模式</strong> (Playwright) 或 <strong>真实电脑模式</strong> (PyAutoGUI)<br>
-            2. 点击"截取屏幕"按钮进行截图<br>
-            3. 输入指令（可选），然后点击"发送给AI分析"<br>
-            4. AI将返回建议的操作并自动执行（在真实电脑模式下）
-        </div>
-
-        <div class="control-panel">
-            <div class="input-group">
-                <label for="controlMode">操作模式</label>
-                <select id="controlMode" style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
-                    <option value="browser">浏览器模式 (Playwright)</option>
-                    <option value="real">真实电脑模式 (PyAutoGUI)</option>
-                </select>
-            </div>
-
-            <div class="input-group">
-                <label for="backendUrl">
-                    <span class="status-indicator offline" id="statusIndicator"></span>
-                    后端服务地址
-                </label>
-                <input 
-                    type="text" 
-                    id="backendUrl" 
-                    value="http://localhost:5000"
-                    placeholder="http://localhost:5000"
-                >
-            </div>
-
-            <div class="input-group">
-                <label for="instruction">AI指令（可选）</label>
-                <textarea 
-                    id="instruction" 
-                    placeholder="例如：点击屏幕中央的按钮"
-                ></textarea>
-            </div>
-
-            <div class="button-group">
-                <button class="btn-secondary" onclick="captureScreen()">
-                    📸 截取屏幕
-                </button>
-                <button class="btn-primary" id="analyzeBtn" onclick="analyzeScreenshot()" disabled>
-                    🚀 发送给AI分析
-                </button>
-            </div>
-        </div>
-
-        <div class="preview-section">
-            <div class="preview-title">截图预览</div>
-            <div class="image-container" id="imageContainer">
-                <img id="screenshotPreview" alt="截图预览">
-                <canvas id="clickCanvas"></canvas>
+<body class="text-md3-onBackground min-h-screen font-sans">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar Navigation Rail -->
+        <nav class="w-20 md:w-24 flex flex-col items-center py-8 glass z-10 shrink-0">
+            <div class="mb-10 flex flex-col items-center gap-2">
+                <div class="relative w-12 h-12 rounded-2xl shadow-md3-2 border border-white/20 ring-4 ring-md3-primary/5">
+                    <img src="assets/logo.png" alt="Logo" class="w-full h-full object-cover rounded-2xl">
+                    <!-- Status Dot moved to Logo Corner -->
+                    <div class="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-white bg-md3-error shadow-sm transition-colors duration-500" id="status-dot"></div>
+                </div>
+                <span class="text-[10px] font-bold text-md3-primary tracking-widest uppercase">Control</span>
             </div>
             
-            <div id="resultBox" class="result-box">
-                <div class="result-title">AI分析结果</div>
-                <div class="result-content" id="resultContent"></div>
+            <div class="flex flex-col gap-8 flex-1">
+                <button onclick="switchMode('browser')" id="nav-browser" class="nav-item group relative flex flex-col items-center">
+                    <div class="nav-icon-bg h-8 w-14 rounded-full flex items-center justify-center transition-all duration-200 tab-active">
+                        <span class="material-icons-outlined">public</span>
+                    </div>
+                    <span class="text-xs mt-1 font-medium group-hover:text-md3-primary">浏览器</span>
+                </button>
+
+                <button onclick="switchMode('desktop')" id="nav-desktop" class="nav-item group relative flex flex-col items-center">
+                    <div class="nav-icon-bg h-8 w-14 rounded-full flex items-center justify-center transition-all duration-200 hover:bg-md3-surfaceVariant">
+                        <span class="material-icons-outlined">desktop_windows</span>
+                    </div>
+                    <span class="text-xs mt-1 font-medium group-hover:text-md3-primary">桌面</span>
+                </button>
+
+                <button onclick="switchMode('background')" id="nav-background" class="nav-item group relative flex flex-col items-center">
+                    <div class="nav-icon-bg h-8 w-14 rounded-full flex items-center justify-center transition-all duration-200 hover:bg-md3-surfaceVariant">
+                        <span class="material-icons-outlined">layers</span>
+                    </div>
+                    <span class="text-xs mt-1 font-medium group-hover:text-md3-primary">后台</span>
+                </button>
+            </div>
+
+            <div class="flex flex-col items-center">
+                <button onclick="toggleSettings()" class="p-2 rounded-xl hover:bg-md3-surfaceVariant group transition-colors">
+                    <span class="material-icons-outlined text-md3-onSurfaceVariant group-hover:text-md3-primary">settings</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 flex flex-col overflow-hidden">
+            <!-- Top Bar -->
+            <header class="h-16 flex items-center justify-between px-8 glass shadow-sm z-10">
+            <div class="flex items-center gap-3">
+                <img src="assets/logo.png" class="w-8 h-8 rounded-lg shadow-md3-1 border border-white/20">
+                <h1 class="text-xl font-medium tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-md3-primary to-md3-tertiary" id="page-title">浏览器控制沙盒</h1>
+                <div id="backend-status" class="px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-md3-surfaceVariant text-md3-onSurfaceVariant">
+                    正在检查后端...
+                </div>
+            </div>
+                <div class="flex items-center gap-6">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-md3-outline">Session:</span>
+                        <span id="session-id-display" class="text-xs font-mono bg-md3-surfaceVariant px-2 py-0.5 rounded">None</span>
+                    </div>
+                    <button onclick="refreshScreen()" class="text-md3-primary flex items-center gap-1 hover:underline">
+                        <span class="material-icons-outlined text-sm">refresh</span>
+                        <span class="text-sm">刷新</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Content Workspace -->
+            <div class="flex-1 flex overflow-hidden p-4 gap-4">
+                <!-- Left Control Panel -->
+                <div class="w-72 flex flex-col gap-3 h-full overflow-y-auto custom-scrollbar pr-1 shrink-0">
+                    <!-- Instruction Card -->
+                    <div class="glass rounded-2xl p-3 shadow-md3-1 flex flex-col gap-2">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-[10px] font-bold uppercase tracking-wider text-md3-outline">任务指令</h2>
+                            <select id="agent-mode" class="text-[9px] bg-md3-surfaceVariant px-1.5 py-0.5 rounded border-none focus:ring-0">
+                                <option value="manual">手动</option>
+                                <option value="step">Agent 单步</option>
+                                <option value="auto">Agent 自动</option>
+                            </select>
+                        </div>
+                        <textarea id="instruction" class="w-full h-20 bg-md3-surfaceVariant/50 rounded-xl p-2 text-xs focus:outline-none focus:ring-1 focus:ring-md3-primary border-none placeholder-md3-onSurfaceVariant/50 custom-scrollbar" placeholder="输入任务..."></textarea>
+                        
+                        <div id="max-steps-container" class="hidden flex items-center justify-between">
+                            <span class="text-[9px] text-md3-outline font-bold">MAX STEPS</span>
+                            <input type="number" id="max-steps" value="20" class="w-10 text-[9px] bg-md3-surfaceVariant px-1 py-0.5 rounded border-none">
+                        </div>
+
+                        <button onclick="executeAction()" id="action-btn" class="bg-md3-primary text-md3-onPrimary py-1.5 rounded-full text-xs font-medium shadow-md3-1 hover:brightness-110 flex items-center justify-center gap-1">
+                            <span class="material-icons-outlined text-xs">auto_awesome</span>
+                            <span>执行</span>
+                        </button>
+                        <button onclick="stopAction()" id="stop-btn" class="hidden bg-md3-error text-md3-onError py-1.5 rounded-full text-xs font-medium flex items-center justify-center gap-1">
+                            <span class="material-icons-outlined text-xs">stop</span>
+                            <span>停止</span>
+                        </button>
+                    </div>
+
+                    <!-- Mode-specific Controls (Browser) -->
+                    <div id="browser-controls" class="mode-controls glass rounded-2xl p-3 shadow-md3-1 flex flex-col gap-2">
+                        <h2 class="text-[10px] font-bold uppercase tracking-wider text-md3-outline">浏览器</h2>
+                        <input type="text" id="target-url" value="https://www.google.com" class="w-full bg-md3-surfaceVariant/50 px-2 py-1 rounded-lg text-xs border-none focus:ring-1 focus:ring-md3-primary" placeholder="URL">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="bg-md3-surfaceVariant/50 rounded-lg px-2 py-0.5 flex items-center">
+                                <span class="text-[8px] text-md3-outline mr-1">W</span>
+                                <input type="number" id="browser-width" value="1280" class="w-full bg-transparent text-xs border-none p-0 focus:ring-0">
+                            </div>
+                            <div class="bg-md3-surfaceVariant/50 rounded-lg px-2 py-0.5 flex items-center">
+                                <span class="text-[8px] text-md3-outline mr-1">H</span>
+                                <input type="number" id="browser-height" value="720" class="w-full bg-transparent text-xs border-none p-0 focus:ring-0">
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-1">
+                                <input type="checkbox" id="headless-mode" checked class="w-3 h-3 text-md3-primary">
+                                <label for="headless-mode" class="text-[9px] text-md3-outline uppercase font-bold">HEADLESS</label>
+                            </div>
+                            <button onclick="launchBrowser()" id="launch-btn" class="bg-md3-secondaryContainer text-md3-onSecondaryContainer px-2 py-1 rounded-lg font-bold text-[9px] uppercase hover:brightness-95">
+                                启动浏览器
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Mode-specific Controls (Background) -->
+                    <div id="background-controls" class="mode-controls hidden glass rounded-2xl p-3 shadow-md3-1 flex flex-col gap-2">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-[10px] font-bold uppercase tracking-wider text-md3-outline">窗口选择</h2>
+                            <button onclick="refreshWindowList()" class="text-md3-primary"><span class="material-icons-outlined text-xs">refresh</span></button>
+                        </div>
+                        <div id="window-list" class="flex flex-col gap-1 max-h-32 overflow-y-auto custom-scrollbar text-[10px]">
+                            <div class="py-2 italic text-center opacity-50">请刷新</div>
+                        </div>
+                        <div id="selected-window-info" class="hidden text-[8px] bg-md3-tertiaryContainer/20 p-1.5 rounded-lg text-md3-onTertiaryContainer font-mono"></div>
+                    </div>
+
+                    <!-- Mode-specific Controls (Desktop) -->
+                    <div id="desktop-controls" class="mode-controls hidden glass rounded-2xl p-3 shadow-md3-1">
+                        <h2 class="text-[10px] font-bold uppercase tracking-wider text-md3-outline mb-1">桌面信息</h2>
+                        <div class="bg-md3-surfaceVariant/50 p-2 rounded-lg text-[10px] flex justify-between">
+                            <span class="text-md3-outline">分辨率:</span>
+                            <span id="desktop-res" class="font-bold">未知</span>
+                        </div>
+                    </div>
+
+                    <!-- Logs Panel -->
+                    <div class="flex-1 glass rounded-2xl p-3 shadow-md3-1 flex flex-col min-h-[150px] overflow-hidden">
+                        <div class="flex items-center justify-between mb-1">
+                            <h2 class="text-[10px] font-bold uppercase tracking-wider text-md3-outline">操作日志</h2>
+                            <button onclick="clearLogs()" class="text-[8px] uppercase font-bold text-md3-primary hover:underline">Clear</button>
+                        </div>
+                        <div id="log-container" class="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-0.5 text-[9px] font-mono leading-tight"></div>
+                    </div>
+                </div>
+
+                <!-- Right Preview & Workspace Area -->
+                <div class="flex-1 flex flex-col gap-3 h-full min-w-0">
+                    <!-- Stats Bar & Tab Manager -->
+                    <div class="flex gap-3 items-center">
+                        <div class="flex gap-2 shrink-0">
+                            <div class="glass px-3 py-1.5 rounded-xl shadow-sm flex items-center gap-2">
+                                <span class="material-icons-outlined text-xs text-md3-primary">bolt</span>
+                                <span id="stat-actions" class="text-xs font-bold">0</span>
+                            </div>
+                            <div class="glass px-3 py-1.5 rounded-xl shadow-sm flex items-center gap-2">
+                                <span class="material-icons-outlined text-xs text-green-600">check</span>
+                                <span id="stat-success" class="text-xs font-bold">0</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Tabs moved here -->
+                        <div id="tab-manager" class="hidden flex-1 glass rounded-xl px-2 py-1 flex items-center gap-2 overflow-hidden">
+                            <span class="text-[9px] font-bold text-md3-outline uppercase whitespace-nowrap ml-1">Tabs:</span>
+                            <div id="tab-list" class="flex gap-1.5 overflow-x-auto custom-scrollbar h-6 items-center"></div>
+                        </div>
+                    </div>
+
+                    <!-- Preview Container -->
+                    <div class="flex-1 glass rounded-[1.5rem] shadow-md3-2 relative overflow-hidden flex items-center justify-center bg-black/5 group">
+                        <div id="preview-placeholder" class="text-center">
+                            <div class="material-icons-outlined text-6xl text-md3-outline/20 mb-4 animate-pulse">screenshot_monitor</div>
+                            <p class="text-md3-outline/50 font-medium">截屏数据加载中...</p>
+                        </div>
+                        
+                        <div id="image-workspace" class="hidden h-full w-full relative flex items-center justify-center">
+                            <img id="screenshot-preview" class="max-w-full max-h-full object-contain shadow-2xl" src="" alt="Screen">
+                            <canvas id="click-canvas" class="absolute pointer-events-none top-0 left-0 w-full h-full"></canvas>
+                        </div>
+                        
+                        <!-- Floating Overlays -->
+                        <div id="ai-thoughts" class="absolute bottom-6 left-6 right-6 hidden">
+                            <div class="bg-md3-onSurface/90 backdrop-blur-md text-white px-6 py-4 rounded-2xl shadow-xl flex items-start gap-4 transform transition-all duration-300 translate-y-0 opacity-100">
+                                <div class="mt-1 flex-shrink-0" id="thought-icon-container">
+                                    <div class="loading-spinner border-t-white"></div>
+                                </div>
+                                <div class="flex-1">
+                                    <p id="thought-content" class="text-xs leading-relaxed opacity-90"></p>
+                                </div>
+                                <button onclick="this.parentElement.parentElement.classList.add('hidden')" class="text-white/50 hover:text-white">
+                                    <span class="material-icons-outlined text-sm">close</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Notes Timeline -->
+                    <div id="notes-timeline-container" class="glass h-32 rounded-3xl p-4 shadow-md3-1 hidden flex flex-col">
+                        <h2 class="text-[10px] font-bold uppercase tracking-wider text-md3-outline mb-2 flex items-center gap-2">
+                            <span class="material-icons-outlined text-xs">event_note</span>
+                            AI 运行轨迹
+                        </h2>
+                        <div id="notes-timeline" class="flex-1 overflow-x-auto overflow-y-hidden flex gap-3 pb-1 custom-scrollbar">
+                            <!-- Timeline items -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Settings Modal (Dialog) -->
+    <div id="settings-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="glass w-[32rem] rounded-[2rem] shadow-2xl p-8 flex flex-col gap-6 scale-90 transition-transform duration-300">
+            <h2 class="text-2xl font-medium text-md3-onBackground">系统设置</h2>
+            
+            <div class="flex flex-col gap-4 overflow-y-auto max-h-[60vh] px-1 custom-scrollbar">
+                <div class="flex flex-col">
+                    <label class="text-xs font-medium text-md3-outline mb-1">后端服务 URL</label>
+                    <input type="text" id="backend-url" value="http://localhost:5000" class="bg-md3-surfaceVariant px-4 py-3 rounded-2xl border-none focus:ring-2 focus:ring-md3-primary text-sm">
+                </div>
+
+                <hr class="border-md3-outline/10">
+                
+                <h3 class="text-xs font-bold text-md3-primary uppercase tracking-widest">Gemini 配置</h3>
+                
+                <div class="flex flex-col">
+                    <label class="text-xs font-medium text-md3-outline mb-1">API Key</label>
+                    <input type="password" id="gemini-api-key" placeholder="输入 Gemini API Key" class="bg-md3-surfaceVariant px-4 py-3 rounded-2xl border-none focus:ring-2 focus:ring-md3-primary text-sm">
+                </div>
+
+                <div class="flex flex-col">
+                    <label class="text-xs font-medium text-md3-outline mb-1">Base URL</label>
+                    <input type="text" id="gemini-base-url" placeholder="https://generativelanguage.googleapis.com/v1beta" class="bg-md3-surfaceVariant px-4 py-3 rounded-2xl border-none focus:ring-2 focus:ring-md3-primary text-sm">
+                </div>
+
+                <div class="flex flex-col">
+                    <label class="text-xs font-medium text-md3-outline mb-1">模型名称</label>
+                    <input type="text" id="gemini-model" value="gemini-3-flash-preview" class="bg-md3-surfaceVariant px-4 py-3 rounded-2xl border-none focus:ring-2 focus:ring-md3-primary text-sm">
+                </div>
+
+                <hr class="border-md3-outline/10">
+
+                <div class="flex flex-col">
+                    <label class="text-xs font-medium text-md3-outline mb-1">截图缩放 (预览提升速度)</label>
+                    <select id="preview-quality" class="bg-md3-surfaceVariant px-4 py-3 rounded-2xl border-none text-sm">
+                        <option value="high">高质量</option>
+                        <option value="medium" selected>平衡</option>
+                        <option value="low">高性能</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-4 border-t border-md3-outline/10">
+                <button onclick="toggleSettings()" class="px-6 py-2 rounded-full text-md3-primary font-medium hover:bg-md3-primary/5">取消</button>
+                <button onclick="saveSettings()" class="bg-md3-primary text-md3-onPrimary px-8 py-2 rounded-full font-medium shadow-md3-1">保存</button>
             </div>
         </div>
     </div>
 
     <script>
-        let currentScreenshot = null;
-        let screenshotWidth = 0;
-        let screenshotHeight = 0;
-        let normalizedX = 0;
-        let normalizedY = 0;
+        // --- State Management ---
+        const state = {
+            mode: 'browser', // 'browser', 'desktop', 'background'
+            sessionId: null,
+            backendUrl: window.location.origin === 'null' ? 'http://localhost:5000' : window.location.origin,
+            geminiApiKey: '',
+            geminiBaseUrl: '',
+            geminiModel: 'gemini-3-flash-preview',
+            isConnected: false,
+            agentRunning: false,
+            taskCompleted: false,
+            actionCount: 0,
+            successCount: 0,
+            errorCount: 0,
+            currentScreenshot: null,
+            screenshotWidth: 0,
+            screenshotHeight: 0,
+            eventSource: null,
+            tabs: [],
+            windows: [],
+            selectedHwnd: null,
+            notes: []
+        };
 
-        // 检查后端服务状态
-        async function checkBackendStatus() {
-            const url = document.getElementById('backendUrl').value;
-            const indicator = document.getElementById('statusIndicator');
-            
-            try {
-                const response = await fetch(`${url}/health`);
-                if (response.ok) {
-                    indicator.classList.remove('offline');
-                    indicator.classList.add('online');
-                    return true;
-                }
-            } catch (error) {
-                console.error('后端服务连接失败:', error);
-            }
-            
-            indicator.classList.remove('online');
-            indicator.classList.add('offline');
-            return false;
+        // --- Core Functions ---
+
+        async function init() {
+            loadLocalSettings();
+            await syncSettingsToBackend();
+            await checkBackend();
+            setInterval(checkBackend, 5000);
+            updateMaxStepsVisibility();
+            addLog('系统初始化就绪', 'info');
         }
 
-        // 页面加载时检查后端状态
-        window.addEventListener('load', () => {
-            checkBackendStatus();
-            // 每5秒检查一次
-            setInterval(checkBackendStatus, 5000);
-        });
+        function loadLocalSettings() {
+            const savedUrl = localStorage.getItem('backendUrl');
+            if (savedUrl) {
+                state.backendUrl = savedUrl;
+                document.getElementById('backend-url').value = savedUrl;
+            }
 
-        // 绘制点击标记
-        function drawClickMarker(x, y, reasoning, normalized_x, normalized_y) {
-            const preview = document.getElementById('screenshotPreview');
-            const canvas = document.getElementById('clickCanvas');
-            const container = document.getElementById('imageContainer');
+            const savedApiKey = localStorage.getItem('geminiApiKey');
+            if (savedApiKey) {
+                state.geminiApiKey = savedApiKey;
+                document.getElementById('gemini-api-key').value = savedApiKey;
+            }
+
+            const savedBaseUrl = localStorage.getItem('geminiBaseUrl');
+            if (savedBaseUrl) {
+                state.geminiBaseUrl = savedBaseUrl;
+                document.getElementById('gemini-base-url').value = savedBaseUrl;
+            }
+
+            const savedModel = localStorage.getItem('geminiModel');
+            if (savedModel) {
+                state.geminiModel = savedModel;
+                document.getElementById('gemini-model').value = savedModel;
+            }
+
+            const savedQuality = localStorage.getItem('previewQuality');
+            if (savedQuality) {
+                document.getElementById('preview-quality').value = savedQuality;
+            }
+        }
+
+        async function saveSettings() {
+            state.backendUrl = document.getElementById('backend-url').value;
+            state.geminiApiKey = document.getElementById('gemini-api-key').value;
+            state.geminiBaseUrl = document.getElementById('gemini-base-url').value;
+            state.geminiModel = document.getElementById('gemini-model').value;
+            const quality = document.getElementById('preview-quality').value;
+
+            localStorage.setItem('backendUrl', state.backendUrl);
+            localStorage.setItem('geminiApiKey', state.geminiApiKey);
+            localStorage.setItem('geminiBaseUrl', state.geminiBaseUrl);
+            localStorage.setItem('geminiModel', state.geminiModel);
+            localStorage.setItem('previewQuality', quality);
+
+            // Sync settings to backend
+            await syncSettingsToBackend();
+
+            toggleSettings();
+            checkBackend();
+            addLog('设置已保存并同步', 'success');
+        }
+
+        async function syncSettingsToBackend() {
+            if (!state.backendUrl) return;
+            try {
+                await fetch(`${state.backendUrl}/config`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        api_key: state.geminiApiKey,
+                        base_url: state.geminiBaseUrl,
+                        model: state.geminiModel
+                    })
+                });
+            } catch (e) {
+                console.error('Failed to sync settings to backend', e);
+            }
+        }
+
+        async function checkBackend() {
+            try {
+                const response = await fetch(`${state.backendUrl}/health`);
+                const data = await response.json();
+                const dot = document.getElementById('status-dot');
+                if (response.ok) {
+                    state.isConnected = true;
+                    if (dot) dot.style.backgroundColor = '#22c55e'; // green-500
+                    document.getElementById('backend-status').textContent = `在线 (${data.model})`;
+                    document.getElementById('backend-status').className = 'px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-green-100 text-green-700';
+                } else {
+                    throw new Error();
+                }
+            } catch (e) {
+                state.isConnected = false;
+                const dot = document.getElementById('status-dot');
+                if (dot) dot.style.backgroundColor = '#B3261E'; // md3-error
+                document.getElementById('backend-status').textContent = '后端离线';
+                document.getElementById('backend-status').className = 'px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-md3-errorContainer text-md3-onErrorContainer';
+            }
+        }
+
+        function switchMode(mode) {
+            state.mode = mode;
             
-            // 设置canvas尺寸与图片一致
-            canvas.width = preview.offsetWidth;
-            canvas.height = preview.offsetHeight;
+            // Update UI Nav
+            ['browser', 'desktop', 'background'].forEach(m => {
+                const nav = document.getElementById(`nav-${m}`);
+                const bg = nav.querySelector('.nav-icon-bg');
+                if (m === mode) {
+                    bg.classList.add('tab-active');
+                    bg.classList.remove('hover:bg-md3-surfaceVariant');
+                } else {
+                    bg.classList.remove('tab-active');
+                    bg.classList.add('hover:bg-md3-surfaceVariant');
+                }
+            });
+
+            // Update Page Title
+            const titles = { browser: '浏览器控制沙盒', desktop: '桌面控制沙盒', background: '后台窗口沙盒' };
+            document.getElementById('page-title').textContent = titles[mode];
+
+            // Toggle Panels
+            document.querySelectorAll('.mode-controls').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`${mode}-controls`).classList.remove('hidden');
+
+            // Reset workspace
+            hideActionOverlay();
+            
+            addLog(`切换到${titles[mode]}`, 'info');
+            
+            if (mode === 'desktop') {
+                updateDesktopInfo();
+            } else if (mode === 'background') {
+                refreshWindowList();
+            }
+        }
+
+        function toggleSettings() {
+            const modal = document.getElementById('settings-modal');
+            const content = modal.querySelector('div');
+            if (modal.classList.contains('opacity-0')) {
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+                content.classList.remove('scale-90');
+            } else {
+                modal.classList.add('opacity-0', 'pointer-events-none');
+                content.classList.add('scale-90');
+            }
+        }
+
+        // --- Browser Logic ---
+
+        async function launchBrowser() {
+            const url = document.getElementById('target-url').value;
+            const width = parseInt(document.getElementById('browser-width').value);
+            const height = parseInt(document.getElementById('browser-height').value);
+            const headless = document.getElementById('headless-mode').checked;
+            
+            setLoading('launch-btn', true);
+            addLog(`正在启动浏览器: ${url}`, 'info');
+
+            try {
+                const response = await fetch(`${state.backendUrl}/playwright/launch`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url, width, height, headless })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    state.sessionId = data.session_id;
+                    updateSessionDisplay();
+                    document.getElementById('tab-manager').classList.remove('hidden');
+                    addLog('浏览器启动成功', 'success');
+                    await refreshScreen();
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (e) {
+                addLog(`启动失败: ${e.message}`, 'error');
+            } finally {
+                setLoading('launch-btn', false);
+            }
+        }
+
+        // --- Desktop Logic ---
+
+        async function updateDesktopInfo() {
+            try {
+                const response = await fetch(`${state.backendUrl}/real/info`);
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('desktop-res').textContent = `${data.width}x${data.height}`;
+                }
+            } catch (e) {}
+        }
+
+        // --- Background Logic ---
+
+        async function refreshWindowList() {
+            const list = document.getElementById('window-list');
+            list.innerHTML = '<div class="loading-spinner mx-auto my-4"></div>';
+            
+            try {
+                const response = await fetch(`${state.backendUrl}/background/windows`);
+                const data = await response.json();
+                if (data.success) {
+                    state.windows = data.windows.filter(w => w.title && w.title.trim());
+                    list.innerHTML = '';
+                    state.windows.forEach(win => {
+                        const div = document.createElement('div');
+                        div.className = 'group flex flex-col p-3 rounded-xl hover:bg-md3-primaryContainer/20 cursor-pointer border border-transparent transition-all';
+                        if (state.selectedHwnd === win.hwnd) div.classList.add('bg-md3-primaryContainer/50', 'border-md3-primary/30');
+                        
+                        div.innerHTML = `
+                            <span class="text-xs font-medium truncate group-hover:text-md3-primary">${win.title}</span>
+                            <span class="text-[9px] text-md3-outline font-mono">HWND: ${win.hwnd}</span>
+                        `;
+                        div.onclick = () => selectWindow(win);
+                        list.appendChild(div);
+                    });
+                }
+            } catch (e) {
+                list.innerHTML = '<div class="text-xs text-center py-4 text-md3-error">无法获取列表</div>';
+            }
+        }
+
+        async function selectWindow(win) {
+            state.selectedHwnd = win.hwnd;
+            refreshWindowList(); // Refresh UI highlights
+            
+            addLog(`选择窗口: ${win.title}`, 'info');
+            try {
+                const response = await fetch(`${state.backendUrl}/background/target`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ hwnd: win.hwnd })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    state.sessionId = 'background';
+                    updateSessionDisplay();
+                    const infoEl = document.getElementById('selected-window-info');
+                    infoEl.classList.remove('hidden');
+                    infoEl.innerHTML = `<strong>${data.title}</strong><br>尺寸: ${data.width}x${data.height}`;
+                    addLog('目标窗口已锁定', 'success');
+                    await refreshScreen();
+                }
+            } catch (e) {
+                addLog('锁定窗口失败', 'error');
+            }
+        }
+
+        // --- Screenshot & Workspace ---
+
+        async function refreshScreen() {
+            let endpoint = '';
+            let body = null;
+
+            if (state.mode === 'browser') {
+                if (!state.sessionId) return;
+                endpoint = '/playwright/screenshot';
+                body = { session_id: state.sessionId };
+            } else if (state.mode === 'desktop') {
+                endpoint = '/real/screenshot';
+            } else if (state.mode === 'background') {
+                endpoint = '/background/screenshot';
+            }
+
+            try {
+                const response = await fetch(`${state.backendUrl}${endpoint}`, {
+                    method: body ? 'POST' : 'GET',
+                    headers: body ? { 'Content-Type': 'application/json' } : {},
+                    body: body ? JSON.stringify(body) : null
+                });
+                const data = await response.json();
+                if (data.success) {
+                    updatePreview(data);
+                    if (data.tabs) updateTabList(data.tabs, data.active_index);
+                }
+            } catch (e) {
+                addLog('刷新截图失败', 'error');
+            }
+        }
+
+        function updatePreview(data) {
+            state.currentScreenshot = data.screenshot;
+            state.screenshotWidth = data.width;
+            state.screenshotHeight = data.height;
+
+            const img = document.getElementById('screenshot-preview');
+            const workspace = document.getElementById('image-workspace');
+            const placeholder = document.getElementById('preview-placeholder');
+
+            img.src = data.screenshot;
+            workspace.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+
+            // Clear canvas
+            const canvas = document.getElementById('click-canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function updateTabList(tabs, activeIndex) {
+            state.tabs = tabs;
+            const list = document.getElementById('tab-list');
+            list.innerHTML = '';
+            tabs.forEach(tab => {
+                const btn = document.createElement('button');
+                btn.className = `px-2 py-1 rounded-lg text-[10px] truncate max-w-[100px] border transition-all ${tab.index === activeIndex ? 'bg-md3-primary border-md3-primary text-white shadow-md' : 'bg-white border-md3-outline/20 text-md3-outline hover:border-md3-primary/50'}`;
+                btn.textContent = tab.title || '新标签页';
+                btn.title = tab.url;
+                btn.onclick = () => switchTab(tab.index);
+                list.appendChild(btn);
+            });
+        }
+
+        async function switchTab(index) {
+            try {
+                const response = await fetch(`${state.backendUrl}/playwright/switch_tab`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ session_id: state.sessionId, index })
+                });
+                if (response.ok) {
+                    addLog(`切换到标签页 ${index}`, 'info');
+                    await refreshScreen();
+                }
+            } catch (e) {}
+        }
+
+        // --- Action Execution ---
+
+        async function executeAction() {
+            const instruction = document.getElementById('instruction').value;
+            const mode = document.getElementById('agent-mode').value;
+            
+            if (state.mode === 'browser' && !state.sessionId) {
+                alert('请先启动浏览器');
+                return;
+            }
+
+            if (mode === 'manual') {
+          await runManualStep(instruction);
+            } else {
+                await startAgent(instruction, mode);
+            }
+        }
+
+        async function runManualStep(instruction) {
+            if (!state.currentScreenshot) {
+                alert('请先获取截图');
+                return;
+            }
+
+            setLoading('action-btn', true);
+            showActionOverlay('AI 正在分析屏幕内容...');
+            addLog('手动单步分析中...', 'info');
+
+            try {
+                // Analyze
+                const response = await fetch(`${state.backendUrl}/analyze`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        image: state.currentScreenshot,
+                        screen_width: state.screenshotWidth,
+                        screen_height: state.screenshotHeight,
+                        instruction: instruction || '请分析当前屏幕'
+                    })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showActionOverlay(`分析完成：${data.reasoning || data.function_name}`);
+                    addLog(`AI 分析成功: ${data.function_name}`, 'success');
+                    
+                    // Draw marker if coordinates exist
+                    if (data.x !== undefined && data.y !== undefined) {
+                        drawMarker(data.x, data.y);
+                    }
+
+                    // Execute based on mode
+                    let execEndpoint = '';
+                    let execBody = { action: data };
+
+                    if (state.mode === 'browser') {
+                        execEndpoint = '/playwright/execute';
+                        execBody.session_id = state.sessionId;
+                    } else if (state.mode === 'desktop') {
+                        execEndpoint = '/real/execute';
+                    } else {
+                        execEndpoint = '/background/execute';
+                    }
+
+                    const execResp = await fetch(`${state.backendUrl}${execEndpoint}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(execBody)
+                    });
+                    const execData = await execResp.json();
+                    
+                    if (execData.success) {
+                        addLog('操作执行成功', 'success');
+                        state.actionCount++;
+                        state.successCount++;
+                        updateStats();
+                        await refreshScreen();
+                    }
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (e) {
+                addLog(`分析失败: ${e.message}`, 'error');
+                state.errorCount++;
+                updateStats();
+                hideActionOverlay();
+            } finally {
+                setLoading('action-btn', false);
+            }
+        }
+
+        async function startAgent(task, mode) {
+            const maxSteps = parseInt(document.getElementById('max-steps').value) || 20;
+            const sid = state.mode === 'browser' ? state.sessionId : (state.mode === 'desktop' ? 'real' : 'background');
+            
+            setLoading('action-btn', true);
+            document.getElementById('action-btn').classList.add('hidden');
+            document.getElementById('stop-btn').classList.remove('hidden');
+            state.agentRunning = true;
+            
+            addLog(`启动 Agent (${mode}): ${task}`, 'info');
+            subscribeEvents(sid);
+
+            try {
+                const response = await fetch(`${state.backendUrl}/agent/start`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: sid,
+                        task,
+                        screen_width: state.screenshotWidth || 1280,
+                        screen_height: state.screenshotHeight || 720,
+                        mode: mode,
+                        max_steps: maxSteps
+                    })
+                });
+                const data = await response.json();
+                // Response for auto mode returns when done, for step mode returns first step
+                if (data.success && mode === 'step') {
+                    // Logic for manual clicking "Continue" could go here if needed
+                }
+            } catch (e) {
+                addLog('Agent 启动失败', 'error');
+                stopAction();
+            }
+        }
+
+        async function stopAction() {
+            const sid = state.mode === 'browser' ? state.sessionId : (state.mode === 'desktop' ? 'real' : 'background');
+            try {
+                await fetch(`${state.backendUrl}/agent/stop`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ session_id: sid })
+                });
+            } catch (e) {}
+            
+            setLoading('action-btn', false);
+            document.getElementById('action-btn').classList.remove('hidden');
+            document.getElementById('stop-btn').classList.add('hidden');
+            state.agentRunning = false;
+            unsubscribeEvents();
+            addLog('Agent 已停止', 'info');
+            hideActionOverlay();
+        }
+
+        // --- Event Subscription (SSE) ---
+
+        function subscribeEvents(sid) {
+            unsubscribeEvents();
+            state.eventSource = new EventSource(`${state.backendUrl}/agent/events/${sid}`);
+            
+            state.eventSource.addEventListener('screenshot', (e) => {
+                const data = JSON.parse(e.data).data;
+                updatePreview(data);
+                if (data.url) addLog(`URL 变化: ${data.url}`, 'info');
+            });
+
+            state.eventSource.addEventListener('action', (e) => {
+                const data = JSON.parse(e.data).data;
+                showActionOverlay(`执行操作: ${data.action} ${data.x ? '('+data.x+','+data.y+')' : ''}`);
+                addLog(`Agent 动作: ${data.action}`, 'info');
+                state.actionCount++;
+                updateStats();
+                if (data.x !== undefined) drawMarker(data.x, data.y);
+            });
+
+            state.eventSource.addEventListener('complete', (e) => {
+                const data = JSON.parse(e.data).data;
+                addLog(`✅ 任务完成: ${data.summary}`, 'success');
+                showActionOverlay(`任务完成：${data.summary}`, true);
+                state.successCount++;
+                updateStats();
+                stopAction();
+            });
+
+            state.eventSource.addEventListener('notes', (e) => {
+                const data = JSON.parse(e.data).data;
+                state.notes = data.notes;
+                updateNotesTimeline();
+            });
+
+            state.eventSource.addEventListener('error', (e) => {
+                const data = JSON.parse(e.data).data;
+                addLog(`❌ Agent 错误: ${data.error}`, 'error');
+                state.errorCount++;
+                updateStats();
+            });
+        }
+
+        function unsubscribeEvents() {
+            if (state.eventSource) {
+                state.eventSource.close();
+                state.eventSource = null;
+            }
+        }
+
+        // --- UI Utilities ---
+
+        function addLog(msg, type = 'info') {
+            const container = document.getElementById('log-container');
+            const div = document.createElement('div');
+            const colors = { 
+                info: 'text-md3-onSurfaceVariant', 
+                success: 'text-green-600 font-bold', 
+   error: 'text-md3-error font-bold', 
+                warning: 'text-md3-tertiary' 
+            };
+            div.className = `${colors[type] || colors.info} border-l-2 pl-2 border-current/20 py-0.5`;
+            div.innerHTML = `<span class="opacity-40">[${new Date().toLocaleTimeString([], {hour12:false})}]</span> ${msg}`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function clearLogs() {
+            document.getElementById('log-container').innerHTML = '';
+        }
+
+        function updateStats() {
+            document.getElementById('stat-actions').textContent = state.actionCount;
+            document.getElementById('stat-success').textContent = state.successCount;
+            document.getElementById('stat-errors').textContent = state.errorCount;
+        }
+
+        function updateSessionDisplay() {
+            document.getElementById('session-id-display').textContent = state.sessionId || 'None';
+        }
+
+        function setLoading(id, loading) {
+            const btn = document.getElementById(id);
+            if (loading) {
+                btn.disabled = true;
+                btn.dataset.original = btn.innerHTML;
+                btn.innerHTML = '<div class="loading-spinner border-t-white"></div>';
+            } else {
+                btn.disabled = false;
+                if (btn.dataset.original) btn.innerHTML = btn.dataset.original;
+            }
+        }
+
+        function showActionOverlay(content, isComplete = false) {
+            const overlay = document.getElementById('ai-thoughts');
+            const text = document.getElementById('thought-content');
+            const iconContainer = document.getElementById('thought-icon-container');
+            
+            text.textContent = content;
+            
+            if (isComplete) {
+                iconContainer.innerHTML = '<span class="material-icons-outlined text-green-400">check_circle</span>';
+            } else {
+                iconContainer.innerHTML = '<div class="loading-spinner border-t-white"></div>';
+            }
+            
+            overlay.classList.remove('hidden');
+        }
+
+        function hideActionOverlay() {
+            document.getElementById('ai-thoughts').classList.add('hidden');
+        }
+
+        function drawMarker(x, y) {
+            const canvas = document.getElementById('click-canvas');
+            const preview = document.getElementById('screenshot-preview');
+            
+            // Set canvas size to match displayed image exactly
+            canvas.width = preview.clientWidth;
+            canvas.height = preview.clientHeight;
             
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // 计算缩放比例（从实际屏幕尺寸到显示尺寸）
-            const scaleX = preview.offsetWidth / screenshotWidth;
-            const scaleY = preview.offsetHeight / screenshotHeight;
-            
-            // 转换坐标（x, y已经是实际像素坐标）
-            const displayX = x * scaleX;
-            const displayY = y * scaleY;
-            
-            // 保存归一化坐标
-            normalizedX = normalized_x;
-            normalizedY = normalized_y;
-            
-            // 绘制外圈（红色）
+
+            // Scale normalized/pixel coordinates to display coordinates
+            const scaleX = canvas.width / state.screenshotWidth;
+            const scaleY = canvas.height / state.screenshotHeight;
+            const dx = x * scaleX;
+            const dy = y * scaleY;
+
+            // MD3 styled ripple/marker
             ctx.beginPath();
-            ctx.arc(displayX, displayY, 20, 0, 2 * Math.PI);
-            ctx.strokeStyle = '#ff0000';
-            ctx.lineWidth = 3;
-            ctx.stroke();
-            
-            // 绘制内圈（白色）
-            ctx.beginPath();
-            ctx.arc(displayX, displayY, 15, 0, 2 * Math.PI);
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            
-            // 绘制中心点
-            ctx.beginPath();
-            ctx.arc(displayX, displayY, 5, 0, 2 * Math.PI);
-            ctx.fillStyle = '#ff0000';
+            ctx.arc(dx, dy, 15, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(103, 80, 164, 0.4)';
             ctx.fill();
             
-            // 绘制十字线
-            ctx.strokeStyle = '#ff0000';
-            ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.moveTo(displayX - 25, displayY);
-            ctx.lineTo(displayX + 25, displayY);
-            ctx.moveTo(displayX, displayY - 25);
-            ctx.lineTo(displayX, displayY + 25);
+            ctx.arc(dx, dy, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#6750A4';
+            ctx.fill();
+            
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
             ctx.stroke();
-            
-            // 绘制坐标文本背景
-            const text = `像素: (${x}, ${y})`;
-            const normText = `归一化: (${normalized_x}, ${normalized_y})`;
-            ctx.font = 'bold 12px Arial';
-            const textWidth = Math.max(ctx.measureText(text).width, ctx.measureText(normText).width);
-            const textX = displayX + 30;
-            const textY = displayY - 20;
-            
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-            ctx.fillRect(textX - 5, textY - 16, textWidth + 10, 40);
-            
-            // 绘制坐标文本
-            ctx.fillStyle = '#ffffff';
-            ctx.fillText(text, textX, textY);
-            ctx.fillText(normText, textX, textY + 16);
-            
-            // 如果有reasoning，也显示
-            if (reasoning) {
-                const reasonText = reasoning.length > 30 ? reasoning.substring(0, 30) + '...' : reasoning;
-                ctx.font = '12px Arial';
-                const reasonWidth = ctx.measureText(reasonText).width;
-                const reasonX = displayX + 30;
-                const reasonY = displayY + 15;
-                
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                ctx.fillRect(reasonX - 5, reasonY - 14, reasonWidth + 10, 20);
-                
-                ctx.fillStyle = '#ffff00';
-                ctx.fillText(reasonText, reasonX, reasonY);
-            }
         }
 
-        // 截取屏幕
-        async function captureScreen() {
-            const mode = document.getElementById('controlMode').value;
-            const backendUrl = document.getElementById('backendUrl').value;
+        function updateNotesTimeline() {
+            const container = document.getElementById('notes-timeline-container');
+            const timeline = document.getElementById('notes-timeline');
+            
+            if (state.notes.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+            
+            container.classList.remove('hidden');
+            timeline.innerHTML = '';
+            
+            state.notes.forEach(note => {
+                const item = document.createElement('div');
+                item.className = 'flex-shrink-0 w-64 bg-white/50 rounded-2xl p-3 flex flex-col gap-2 border border-md3-outline/10';
+                
+                const categoryColors = { info: 'bg-blue-100 text-blue-700', progress: 'bg-green-100 text-green-700', todo: 'bg-orange-100 text-orange-700', important: 'bg-purple-100 text-purple-700', error: 'bg-red-100 text-red-700' };
+                const catColor = categoryColors[note.category] || categoryColors.info;
+                
+                item.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="text-[8px] px-2 py-0.5 rounded-full font-bold uppercase ${catColor}">${note.category}</span>
+                        <span class="text-[8px] text-md3-outline">Step ${note.step}</span>
+                    </div>
+                    <p class="text-[10px] line-clamp-3 text-md3-onSurface">${note.content}</p>
+                `;
+                timeline.appendChild(item);
+            });
+            
+            timeline.scrollLeft = timeline.scrollWidth;
+        }
 
-            if (mode === 'real') {
-                // 真实电脑模式：从后端获取截图
-                try {
-                    const response = await fetch(`${backendUrl}/real/screenshot`);
-                    const data = await response.json();
-                    if (data.success) {
-                        currentScreenshot = data.screenshot;
-                        screenshotWidth = data.width;
-                        screenshotHeight = data.height;
-                        
-                        displayScreenshot();
-                        alert('✅ 成功从后端获取真实屏幕截图！');
-                    } else {
-                        throw new Error(data.error);
-                    }
-                } catch (error) {
-                    console.error('获取后端截图失败:', error);
-                    alert('❌ 获取后端截图失败: ' + error.message);
-                }
+        function updateMaxStepsVisibility() {
+            const mode = document.getElementById('agent-mode').value;
+            const container = document.getElementById('max-steps-container');
+            if (mode === 'auto') {
+                container.classList.remove('hidden');
             } else {
-                // 浏览器模式：使用浏览器 API 截图
-                try {
-                    const stream = await navigator.mediaDevices.getDisplayMedia({
-                        video: { mediaSource: 'screen' }
-                    });
-
-                    const video = document.createElement('video');
-                    video.srcObject = stream;
-                    video.play();
-
-                    await new Promise(resolve => { video.onloadedmetadata = resolve; });
-
-                    const canvas = document.createElement('canvas');
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    screenshotWidth = canvas.width;
-                    screenshotHeight = canvas.height;
-                    
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(video, 0, 0);
-
-                    stream.getTracks().forEach(track => track.stop());
-                    currentScreenshot = canvas.toDataURL('image/png');
-
-                    displayScreenshot();
-                    alert('✅ 浏览器截图成功！');
-                } catch (error) {
-                    console.error('浏览器截图失败:', error);
-                    alert('❌ 浏览器截图失败: ' + error.message);
-                }
+                container.classList.add('hidden');
             }
         }
 
-        function displayScreenshot() {
-            const preview = document.getElementById('screenshotPreview');
-            const container = document.getElementById('imageContainer');
-            const clickCanvas = document.getElementById('clickCanvas');
-            
-            preview.src = currentScreenshot;
-            container.style.display = 'block';
-            
-            const ctx2 = clickCanvas.getContext('2d');
-            ctx2.clearRect(0, 0, clickCanvas.width, clickCanvas.height);
+        // --- Event Listeners ---
 
-            document.getElementById('analyzeBtn').disabled = false;
-            document.getElementById('resultBox').style.display = 'none';
-        }
+        document.getElementById('agent-mode').addEventListener('change', updateMaxStepsVisibility);
 
-        // 发送截图给AI分析
-        async function analyzeScreenshot() {
-            if (!currentScreenshot) {
-                alert('请先截取屏幕！');
-                return;
-            }
+        window.onload = init;
 
-            const backendUrl = document.getElementById('backendUrl').value;
-            const instruction = document.getElementById('instruction').value;
-            const analyzeBtn = document.getElementById('analyzeBtn');
-            const resultBox = document.getElementById('resultBox');
-            const resultContent = document.getElementById('resultContent');
+        // Clean up on exit
+        window.addEventListener('beforeunload', () => {
+            unsubscribeEvents();
+        });
 
-            // 检查后端状态
-            const isOnline = await checkBackendStatus();
-            if (!isOnline) {
-                alert('❌ 后端服务未连接，请检查服务是否启动！');
-                return;
-            }
-
-            // 禁用按钮并显示加载状态
-            analyzeBtn.disabled = true;
-            analyzeBtn.innerHTML = '🔄 分析中<span class="loading"></span>';
-
-            try {
-                const response = await fetch(`${backendUrl}/analyze`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        image: currentScreenshot,
-                        screen_width: screenshotWidth,
-                        screen_height: screenshotHeight,
-                        instruction: instruction || '请分析这张截图，找到一个合适的位置进行点击。'
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    resultBox.className = 'result-box success';
-                    resultBox.style.display = 'block';
-                    resultContent.textContent = JSON.stringify(data, null, 2);
-                    
-                    const mode = document.getElementById('controlMode').value;
-                    
-                    // 检查是否是多工具调用
-                    if (data.type === 'multiple_function_calls') {
-                        // 多工具调用
-                        let message = `✅ AI返回了 ${data.count} 个操作步骤：\n\n`;
-                        
-                        for (const result of data.results) {
-                            if (result.success) {
-                                // 如果是真实电脑模式，自动执行操作
-                                if (mode === 'real') {
-                                    await executeRealAction(result);
-                                }
-                            }
-                        }
-                        
-                        data.results.forEach((result, index) => {
-                            const step = index + 1;
-                            if (result.success) {
-                                message += `步骤${step}: ${result.function_name}\n`;
-                                if (result.action === 'click') {
-                                    message += `  - 点击坐标: (${result.x}, ${result.y})\n`;
-                                } else if (result.action === 'type') {
-                                    message += `  - 输入文本: "${result.text.substring(0, 30)}..."\n`;
-                                }
-                                message += `  - 原因: ${result.reasoning}\n\n`;
-                            }
-                        });
-                        
-                        // 标记第一个操作
-                        const firstResult = data.results[0];
-                        if (firstResult.success && (firstResult.action === 'click' || firstResult.action === 'hover')) {
-                            drawClickMarker(firstResult.x, firstResult.y, `步骤1: ${firstResult.reasoning}`, firstResult.normalized_x || firstResult.x, firstResult.normalized_y || firstResult.y);
-                        }
-                        
-                        alert(message + (mode === 'real' ? "\n⚡ 所有操作已在真实电脑上执行！" : ""));
-                    } else {
-                        // 单工具调用
-                        if (mode === 'real') {
-                            await executeRealAction(data);
-                        }
-
-                        if ((data.action === 'click' || data.action === 'hover') && data.x !== undefined && data.y !== undefined) {
-                            drawClickMarker(data.x, data.y, data.reasoning, data.normalized_x || data.x, data.normalized_y || data.y);
-                        }
-                        
-                        alert(`✅ AI分析成功！${mode === 'real' ? "\n⚡ 操作已在真实电脑上执行！" : ""}`);
-                    }
-                } else {
-                    resultBox.className = 'result-box error';
-                    resultBox.style.display = 'block';
-                    resultContent.textContent = `错误: ${data.error}`;
-                    
-                    alert('❌ AI分析失败: ' + data.error);
-                }
-            } catch (error) {
-                console.error('请求失败:', error);
-                resultBox.className = 'result-box error';
-                resultBox.style.display = 'block';
-                resultContent.textContent = `网络错误: ${error.message}`;
-                
-                alert('❌ 请求失败: ' + error.message);
-            } finally {
-                // 恢复按钮状态
-                analyzeBtn.disabled = false;
-                analyzeBtn.innerHTML = '🚀 发送给AI分析';
-            }
-        }
-
-        async function executeRealAction(action) {
-            const backendUrl = document.getElementById('backendUrl').value;
-            try {
-                const response = await fetch(`${backendUrl}/real/execute`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: action })
-                });
-                return await response.json();
-            } catch (error) {
-                console.error('执行真实操作失败:', error);
-            }
-        }
     </script>
 </body>
 </html>
